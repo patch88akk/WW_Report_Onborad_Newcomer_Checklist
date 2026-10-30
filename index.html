@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>OB Checklist Support</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Mitr:wght@400;500&display=swap">
+<style>
+/* Layout: one calm column like a paper form, tabs on top; admin gets a wide table view */
+:root{
+  --bg:#F5F8FC; --card:#FFFFFF; --ink:#1E2836; --sub:#5B6879; --line:#DFE6F0; --faint:#A9B4C2;
+  --accent:#1F5FBF; --accent-soft:#E4EDFB; --teal:#2F8F7A; --teal-soft:#E5F4EF; --lav:#EAF0F8; --cream:#F0F5FC; --sky:#E8F3FA;
+  --warn:#B4541A; --warn-soft:#FCEBDD;
+  --display:"Mitr","IBM Plex Sans Thai",Tahoma,sans-serif;
+  --body:"IBM Plex Sans Thai",Tahoma,"Noto Sans Thai",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121821; --card:#1B2330; --ink:#E9EEF5; --sub:#A3AFBF; --line:#2C3747; --faint:#5E6B7C;
+  --accent:#6FA3F2; --accent-soft:#1E2E48; --teal:#5CC2A9; --teal-soft:#1F3330; --lav:#212C3B; --cream:#1D2838; --sky:#1B2B38;
+  --warn:#F0A06A; --warn-soft:#3A2A1E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121821; --card:#1B2330; --ink:#E9EEF5; --sub:#A3AFBF; --line:#2C3747; --faint:#5E6B7C;
+  --accent:#6FA3F2; --accent-soft:#1E2E48; --teal:#5CC2A9; --teal-soft:#1F3330; --lav:#212C3B; --cream:#1D2838; --sky:#1B2B38;
+  --warn:#F0A06A; --warn-soft:#3A2A1E; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap.wide{max-width:1240px}
+h1,h2,h3{font-family:var(--display);font-weight:500;text-wrap:balance;margin:0}
+h1{font-size:1.6rem;color:var(--accent);line-height:1.3}
+.lead{color:var(--sub);margin:4px 0 0}
+header.top{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between;border-top:4px solid var(--accent);padding-top:16px}
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap}
+nav.tabs a{font-family:var(--display);text-decoration:none;color:var(--sub);padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:.95rem}
+nav.tabs a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+nav.tabs a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,label.seg:focus-within{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:2px}
+.notice{margin-top:14px;padding:10px 14px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:.95rem}
+section.blk{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 20px;margin-top:16px}
+.blk-h{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:12px}
+.tag{font-family:var(--display);background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:0 9px;font-size:.95rem}
+.blk-h h2{font-size:1.15rem}
+.hint{color:var(--sub);font-size:.88rem}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px 16px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field>span{font-size:.9rem;color:var(--sub)}
+.photo{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.photo-pick{display:flex;align-items:center;justify-content:center;width:100%;max-width:420px;min-height:120px;border:2px dashed var(--line);border-radius:14px;background:var(--bg);color:var(--sub);cursor:pointer;text-align:center;padding:16px}
+.photo-pick input{position:absolute;opacity:0;width:1px;height:1px}
+.photo-pick:focus-within{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent)}
+.photo.missing .photo-pick{border-color:var(--warn);background:var(--warn-soft)}
+#photoPrev{max-width:min(420px,100%);max-height:320px;border-radius:12px;border:1px solid var(--line);object-fit:contain}
+.dphoto{max-width:100%;max-height:360px;border-radius:12px;border:1px solid var(--line)}
+.shopcard{min-height:44px;border-radius:10px;padding:9px 12px;background:var(--accent-soft);color:var(--sub);font-size:.95rem}
+.shopcard b{color:var(--accent);font-variant-numeric:tabular-nums}
+.req::after{content:" *";color:var(--accent)}
+input[type=text],input[type=date],input[type=time],input[type=search],select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%;min-width:0}
+textarea{min-height:76px;resize:vertical}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+label.seg{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;background:var(--bg);user-select:none}
+label.seg input{position:absolute;opacity:0;pointer-events:none}
+label.seg:has(input:checked){background:var(--accent);border-color:var(--accent);color:#fff}
+label.seg.ok:has(input:checked){background:var(--teal);border-color:var(--teal)}
+label.seg.bad:has(input:checked){background:var(--warn);border-color:var(--warn)}
+.focusrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px}
+.focusrow>div{border-radius:14px;padding:14px 16px}
+.focusrow h3{font-size:1.02rem;margin-bottom:4px}
+.f-do{background:var(--teal-soft)} .f-do h3{color:var(--teal)}
+.f-no{background:var(--warn-soft)} .f-no h3{color:var(--warn)}
+.focusrow ul{margin:4px 0 0;padding-left:18px}
+.checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px 18px}
+.check{display:flex;gap:10px;align-items:flex-start;padding:6px 4px;cursor:pointer}
+.check input{width:20px;height:20px;margin-top:3px;accent-color:var(--teal);flex:none}
+.check b{font-weight:600}
+.check small{display:block;color:var(--sub);font-size:.87rem}
+.group-h{font-family:var(--display);font-size:.95rem;color:var(--sub);margin:16px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.group-h.star{color:var(--teal)}
+.item{display:grid;grid-template-columns:minmax(0,1.1fr) auto minmax(0,1fr);gap:10px 16px;align-items:start;padding:12px 0;border-bottom:1px dashed var(--line)}
+.item:last-child{border-bottom:0}
+.item.star{background:linear-gradient(90deg,var(--teal-soft),transparent 70%);border-radius:10px;padding-left:10px;padding-right:10px}
+.item h4{margin:0;font-size:1rem;font-weight:600}
+.item ul{margin:2px 0 0;padding-left:18px;color:var(--sub);font-size:.9rem}
+.item .rate{display:flex;gap:6px;flex-wrap:wrap}
+.item input[type=text]{background:var(--card)}
+.item.missing .rate{outline:2px dashed var(--warn);outline-offset:4px;border-radius:999px}
+.field.missing input,.field.missing select,.field.missing textarea{border-color:var(--warn);box-shadow:0 0 0 2px var(--warn-soft)}
+.check.missing{background:var(--warn-soft);border-radius:10px}
+.chips.missing{outline:2px dashed var(--warn);outline-offset:4px;border-radius:999px}
+@media (max-width:680px){.item{grid-template-columns:1fr}}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.pane{border-radius:12px;padding:14px}
+.pane.cream{background:var(--cream)} .pane.sky{background:var(--sky)}
+.pane h3{font-size:1rem;margin-bottom:8px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 16px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-family:var(--display);padding:11px 22px;font-size:1.02rem}
+button.ghost{background:transparent}
+button.danger{color:var(--accent);border-color:var(--accent)}
+button:disabled{opacity:.55;cursor:not-allowed}
+.msg{font-size:.95rem}
+.msg.err{color:var(--accent)} .msg.ok{color:var(--teal)}
+.empty{padding:28px;text-align:center;color:var(--sub);background:var(--card);border:1px dashed var(--line);border-radius:14px;margin-top:16px}
+/* admin */
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 16px;min-width:110px}
+.stat b{display:block;font-family:var(--display);font-size:1.5rem;font-weight:500;font-variant-numeric:tabular-nums}
+.stat span{color:var(--sub);font-size:.88rem}
+.stat.ok b{color:var(--teal)} .stat.bad b{color:var(--warn)}
+.filters{display:grid;grid-template-columns:2fr repeat(5,minmax(120px,1fr));gap:10px;margin-top:14px}
+@media (max-width:820px){.filters{grid-template-columns:1fr 1fr}}
+.tablebox{overflow-x:auto;margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:.93rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--display);font-weight:400;color:var(--sub);background:var(--lav);position:sticky;top:0}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--bg)}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;border-radius:999px;padding:1px 10px;font-size:.85rem;white-space:nowrap}
+.pill.ok{background:var(--teal-soft);color:var(--teal)} .pill.bad{background:var(--warn-soft);color:var(--warn)} .pill.n{background:var(--lav);color:var(--sub)}
+/* detail */
+.overlay{position:fixed;inset:0;background:color-mix(in srgb,#000 40%,transparent);z-index:20;display:flex;justify-content:flex-end}
+.drawer{background:var(--bg);width:min(720px,100%);height:100%;overflow-y:auto;padding:20px max(18px,env(safe-area-inset-right,0px)) 40px 18px;padding-top:calc(20px + env(safe-area-inset-top,0px))}
+.drawer h2{font-size:1.3rem}
+.dl{display:grid;grid-template-columns:150px minmax(0,1fr);gap:6px 14px;margin-top:10px}
+.dl dt{color:var(--sub);font-size:.9rem}
+.dl dd{margin:0;overflow-wrap:anywhere}
+.ditem{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.ditem .note{grid-column:1/-1;color:var(--sub);font-size:.92rem}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;z-index:30;font-size:.95rem}
+@media (prefers-reduced-motion:no-preference){.drawer{animation:slide .2s ease-out}@keyframes slide{from{transform:translateX(24px);opacity:.6}}}
+</style>
+</head>
+<body style="margin:0">
+
+<div class="wrap" id="wrap">
+  <header class="top">
+    <div>
+      <h1>On Board (OB) : Support</h1>
+      <p class="lead">ข้อมูลแบบฟอร์มที่สาขาส่งเข้ามาทั้งหมด • ค้นหา ดูรายละเอียด และดาวน์โหลด Excel</p>
+    </div>
+  </header>
+  <div class="notice" id="accessNote" hidden></div>
+
+  <!-- ============ FORM ============ -->
+  <main id="viewForm">
+    <form id="obForm" novalidate>
+      <section class="blk">
+        <div class="blk-h"><h2>ข้อมูลพนักงานใหม่</h2></div>
+        <div class="grid2">
+          <label class="field"><span class="req">ชื่อ-นามสกุล</span><input type="text" id="f_name" autocomplete="off"></label>
+          <label class="field"><span class="req">Area</span><select id="f_area"><option value="">เลือก Area</option></select></label>
+          <label class="field"><span class="req">Shop Code / Shop Name</span><select id="f_shop" disabled><option value="">เลือก Area ก่อน</option></select></label>
+          <div class="field"><span>สาขาที่เลือก</span><div class="shopcard" id="shopCard">ยังไม่ได้เลือกสาขา</div></div>
+          <label class="field"><span class="req">วันที่ On Board</span><input type="date" id="f_date"></label>
+          <div class="grid2" style="grid-template-columns:1fr 1fr">
+            <label class="field"><span class="req">Check In</span><input type="time" id="f_in"></label>
+            <label class="field"><span class="req">Check Out</span><input type="time" id="f_out"></label>
+          </div>
+        </div>
+        <div class="field" style="margin-top:12px"><span class="req">Agency</span>
+          <div class="chips" id="agencyChips"></div>
+        </div>
+      </section>
+
+      <section class="blk">
+        <div class="blk-h"><h2 class="req">ถ่ายรูปพนักงาน คู่กับ ผู้จัดการสาขา / ผู้ประเมิน</h2></div>
+        <div class="photo" id="photoBox">
+          <label class="photo-pick" id="photoPick"><input type="file" id="f_photo" accept="image/*" capture="environment"><span id="photoPickTxt">แตะเพื่อถ่ายรูป หรือเลือกรูปจากเครื่อง</span></label>
+          <img id="photoPrev" alt="รูปพนักงานคู่กับผู้จัดการสาขา" hidden>
+          <div class="actions" style="margin-top:0" id="photoAct" hidden><button type="button" id="photoRetake">ถ่ายใหม่</button><span class="msg" id="photoMsg"></span></div>
+        </div>
+      </section>
+
+      <div class="focusrow">
+        <div class="f-do">
+          <h3>เน้นย้ำ</h3>
+          <div><b>การดูแลลูกค้า &amp; การขาย เป็นสำคัญ</b></div>
+          <div class="hint" style="color:inherit">ให้น้องลองทักทาย ดูแล และพูดคุยกับลูกค้าจริง ๆ โดยมีพี่เลี้ยงอยู่ข้าง ๆ</div>
+        </div>
+        <div class="f-no">
+          <h3>ข้อห้าม</h3>
+          <ul>
+            <li><b>ห้ามพนักงานกดคิวให้ลูกค้า</b></li>
+            <li>ห้ามให้ใช้ User / รหัสผ่านของผู้อื่น และใช้ระบบใด ๆ ของสาขา</li>
+            <li>ห้ามให้ทำธุรกรรมกับลูกค้าเองลำพัง</li>
+          </ul>
+        </div>
+      </div>
+
+      <section class="blk">
+        <div class="blk-h"><span class="tag">A</span><h2>สาขาต้อนรับ &amp; แนะนำข้อมูลเบื้องต้น</h2><span class="hint">ต้องติ๊กครบทุกข้อจึงจะส่งได้</span></div>
+        <div class="checks" id="aList"></div>
+        <div class="grid2" style="margin-top:12px">
+          <label class="field"><span class="req">เพื่อนที่ได้รู้จัก (อย่างน้อย 1 คน)</span><input type="text" id="f_friend" autocomplete="off"></label>
+          <label class="field"><span class="req">ชื่อพี่เลี้ยง (Buddy/Mentor)</span><input type="text" id="f_buddy" autocomplete="off"></label>
+        </div>
+      </section>
+
+      <section class="blk">
+        <div class="blk-h"><span class="tag">B</span><h2>พฤติกรรมระหว่างวัน</h2><span class="hint">ประเมินครบทุกหัวข้อ • หัวข้อที่ "ต้องพัฒนา" ต้องเขียนคำแนะนำ</span></div>
+        <div id="bList"></div>
+      </section>
+
+      <section class="blk">
+        <div class="blk-h"><span class="tag">C</span><h2>สรุปผล &amp; คุยกันท้ายวัน</h2></div>
+        <div class="two">
+          <div class="pane cream">
+            <h3 class="req">สรุปผล</h3>
+            <div class="chips">
+              <label class="seg ok"><input type="radio" name="result" value="pass" id="r_pass">ผ่าน</label>
+              <label class="seg bad"><input type="radio" name="result" value="fail" id="r_fail">ไม่ผ่าน</label>
+            </div>
+            <label class="field" style="margin-top:10px"><span id="reasonLbl" class="req">เหตุผล</span><textarea id="f_reason"></textarea></label>
+          </div>
+          <div class="pane sky">
+            <h3>คุยกันท้ายวัน (สาขาถามน้อง)</h3>
+            <label class="field"><span class="req">"วันนี้ได้เรียนรู้อะไรบ้าง?"</span><textarea id="f_learn"></textarea></label>
+            <label class="field" style="margin-top:8px"><span class="req">"มีอะไรสงสัย หรืออยากเตรียมตัวเรื่องใดก่อนเข้าอบรม?"</span><textarea id="f_ask"></textarea></label>
+          </div>
+        </div>
+        <div class="grid2" style="margin-top:14px">
+          <label class="field"><span class="req">ผู้จัดการสาขา / ผู้ประเมิน</span><input type="text" id="f_mgr" autocomplete="off"></label>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button type="submit" class="primary" id="submitBtn">ส่งแบบฟอร์ม</button>
+        <span class="hint">ช่องที่มี * ต้องกรอกให้ครบ</span>
+        <button type="button" class="ghost" id="clearBtn">ล้างฟอร์ม</button>
+        <span class="msg" id="formMsg" role="status"></span>
+      </div>
+      <div id="clearConfirm" class="actions" hidden>
+        <span class="msg">ล้างข้อมูลที่กรอกไว้ทั้งหมด?</span>
+        <button type="button" class="danger" id="clearYes">ล้าง</button>
+        <button type="button" id="clearNo">ยกเลิก</button>
+      </div>
+    </form>
+  </main>
+
+  <!-- ============ MINE ============ -->
+  <main id="viewMine" hidden>
+    <section class="blk"><div class="blk-h"><h2>รายการที่ส่งจากเครื่องนี้</h2><span class="hint">เก็บไว้ในเบราว์เซอร์ของเครื่องนี้เท่านั้น</span></div>
+      <div id="mineList"></div>
+    </section>
+  </main>
+
+  <!-- ============ ADMIN ============ -->
+  <main id="viewAdmin" hidden>
+   <section class="blk" id="loginBox" style="max-width:440px;margin-inline:auto">
+    <div class="blk-h"><h2>เข้าสู่หน้า Support</h2></div>
+    <form id="loginForm" class="field" style="gap:10px">
+      <label class="field"><span>รหัส Support</span><input type="password" id="adminKey" autocomplete="current-password"></label>
+      <div class="actions" style="margin-top:0"><button type="submit" class="primary" id="loginBtn">เข้าสู่ระบบ</button><span class="msg" id="loginMsg" role="status"></span></div>
+    </form>
+   </section>
+   <div id="adminBody" hidden>
+    <div class="actions" style="justify-content:flex-end;margin-top:12px"><button type="button" class="ghost" id="logoutBtn">ออกจากระบบ</button></div>
+    <div class="stats" id="stats"></div>
+    <div class="filters">
+      <input type="search" id="q" placeholder="ค้นหา ชื่อ / Shop / Code / พี่เลี้ยง / ผู้ประเมิน">
+      <select id="fArea"><option value="">ทุก Area</option></select>
+      <select id="fAgency"><option value="">ทุก Agency</option></select>
+      <select id="fResult"><option value="">ทุกผล</option><option value="pass">ผ่าน</option><option value="fail">ไม่ผ่าน</option></select>
+      <label class="field"><span>ตั้งแต่วันที่ OB</span><input type="date" id="fFrom"></label>
+      <label class="field"><span>ถึงวันที่ OB</span><input type="date" id="fTo"></label>
+    </div>
+    <div class="actions">
+      <button type="button" class="primary" id="exportBtn">ดาวน์โหลด Excel (CSV)</button>
+      <button type="button" id="copyBtn">คัดลอกข้อมูล</button>
+      <button type="button" class="ghost" id="refreshBtn">โหลดใหม่</button>
+      <span class="msg" id="adminMsg" role="status"></span>
+    </div>
+    <div class="tablebox"><table>
+      <thead><tr><th>วันที่ OB</th><th>ชื่อ-นามสกุล</th><th>Agency</th><th>Area</th><th>Shop</th><th>ผล</th><th>ต้องพัฒนา</th><th>ผู้ประเมิน</th><th>ส่งเมื่อ</th></tr></thead>
+      <tbody id="adminRows"></tbody>
+    </table></div>
+    <div id="adminEmpty" class="empty" hidden></div>
+   </div>
+  </main>
+</div>
+<div id="overlay" class="overlay" hidden></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(function(){
+const SHOPS={"rrh":{"BMA I - North West":"BMA","BMA II - South West":"BMA","BMA III - North East":"BMA","BMA IV - South East":"BMA","BMA V - Central":"BMA","UPC - Central":"UPC II","UPC - Central Northeast":"UPC I","UPC - Lower Northeast":"UPC I","UPC - East":"UPC II","UPC - Lower North":"UPC I","UPC - Lower South":"UPC II","UPC - Upper North":"UPC I","UPC - Upper Northeast":"UPC I","UPC - Upper South":"UPC II","UPC - West":"UPC II"},"areas":{"BMA I - North West":[["80101185","True Shop Central West Gate"],["80100480","True Shop The Mall Ngamwongwan 3Fl."],["80101182","True Shop Central Chaengwattana"],["80101305","True Shop Robinson Srisaman"],["80101713","True Shop Central North Ville"],["80101271","True Shop Big C Chaengwattana"],["80101217","True Shop Big C Sukhapibal 5"],["80101218","True Shop Big C Sainoi Nonthaburi"],["80100807","True Shop Lotus's Nakhon In"],["80100477","True Shop Central Ladprao"],["80101180","True Shop Wongsawang Town Center"],["80101264","True Shop Central Plaza Ramindra 1FL."],["80101223","True Shop Gateway Bangsue"],["80101584","True Shop Robinson Ratchaphruek"],["80101623","True Shop The Government Complex"],["80101627","True Shop Central Westville"],["10055254","True Shop Lotus's Ladprao"],["10055275","True Shop Lotus's Tiwanon - Prakret Nonthaburi"],["80101689","True Shop Big C Sukhaphiban 5 (D)"],["80101698","True Shop Central West Gate (D)"],["80101702","True Shop Central Plaza Chaengwattana (D)"]],"BMA II - South West":[["80100566","True Shop Central Rama 2 (H)"],["80100565","True Shop Central Rama 2"],["80100483","True Shop The Mall Thapra"],["80100626","True Shop Central Pinklao 3Fl."],["80100484","True Shop The Mall Bangkae 2Fl."],["80100928","True Shop Seacon Bangkae"],["80100736","True Shop Lotus's Bangpakok"],["10055262","True Shop Lotus's Bangkae"],["10055258","True Shop Lotus's Charan 70"],["80101679","True Shop Seacon Bangkae (D)"]],"BMA III - North East":[["80101340","True Shop Future Park Rangsit"],["80101341","True Shop Future Park Rangsit (H)"],["80100925","True Shop Fashion Island"],["80101123","True Shop Lotus's Sukhapibal 3"],["80101350","True Shop iPlace Latkrabang"],["10055247","True Shop Lotus's Minburi"],["10055253","True Shop Lotus's Ban Fah"],["10055273","True Shop Lotus's Liab Klong 2"],["10055289","True Shop Lotus's Sukhapiban 1"],["10055284","True Shop Lotus's Bangkadi"],["80101706","True Shop Fashion Island (D)"],["80101707","True Shop Future Park Rangsit (2 nd.) (D)"],["80101708","True Shop Future Park Rangsit (G Fl.) (D)"],["80101715","Ten Ten Shop Phaholyothin Soi 69/1"]],"BMA IV - South East":[["80100481","True Shop The Mall Bangkapi"],["80101071","True Shop Seacon Square 2"],["80101066","True Shop Central Bangna"],["80101296","True Shop Paradise Park Srinakarin"],["80101070","True Shop Mega Bangna"],["80100805","True Shop Lotus's Phatthanakan"],["80101418","True Shop Imperial Samrong"],["80101632","True Shop Lotus's Bangna Trad"],["10055285","True Shop Lotus's Sriwaree"],["10055257","True Shop Lotus's Onnut 80"],["10055255","True Shop Lotus's Bang Plee"],["80101709","True Shop Mega Bangna (D)"]],"BMA V - Central":[["80101633","True Shop Makro Sri Ayutthaya"],["80101349","True Shop Silom Complex"],["80101347","True Shop U Chu Liang Building"],["80101068","True Shop Central Rama 3"],["80100836","True Shop Central World 4Fl."],["80101363","True Shop at Chamchuri Square 1"],["80101221","True Shop Emquartier"],["80101269","True Shop Mahboon Krong 4Fl."],["80100478","True Shop Terminal 21"],["80100729","True Shop Station Lotus's Rama 4"],["80101186","True Shop Central Festival East Ville"],["80100715","True Shop Fortune Town 1Fl."],["80100623","True Shop Central Rama 9"],["80100622","True Shop Central Rama 9 4Fl."],["80101630","True kiosk Lotus's Ramintra"],["80101667","True Shop Supreme Complex (D)"],["80101694","True Shop Central Rama 9 (D)"]],"UPC - Central":[["80101626","Kiosk Lotus's Sena Ayutthaya"],["80100856","True Shop Uthaithani"],["80100841","True Move Shop Taweekit Complex Saraburi"],["80101307","True Shop Robinson Lopburi"],["80100763","True Shop The Walk Nakornsawan"],["80101628","True Shop Central Nakhonsawan"],["80100926","True Shop Ayudhaya Park"],["80101329","True Shop Big C Nongbua Nakhonsawan"],["80100796","True Shop Lotus's Khok Samrong Lopburi"],["80100725","True Shop Lotus's Bang Pa-In Ayudhaya"],["80101358","True Shop Central Ayutthaya"],["80101351","True Shop Lotus's Kaengkhoi"],["80101691","True Shop Ayutthaya (D)"]],"UPC - Central Northeast":[["80101266","True Shop Central Ubonratchathani"],["80100778","True Shop Lotus's Yasothon"],["80101227","True Shop Lotus's Ubonratchathani"],["80100771","True Shop Lotus's Chiangyuen Mahasarakham"],["80101303","True Shop Robinson Roi-Et"],["80101309","True Shop Robinson Mukdaharn"],["80100783","True Shop Lotus's Phonthong Roi Ed"],["80100847","True Shop Mini Senangkhanikkom Amnatcharoen"],["80100852","True Shop Khamcha-I Mukdahan"],["80100861","True Shop Kasetwisai Roiet"],["80100802","True Shop Lotus's Borabue Mahasarakham"],["80100790","True Shop Lotus's Pibun Mangsaharn Ubonratchathani"],["80100797","True Shop Lotus's Trakan Phuet Phon Ubonratchathani"],["80100832","True Shop Lotus's Det Udom Ubonratchathani"],["80100864","True Shop Buntharik Ubonratchathani"],["10055248","True Shop Lotus's Kosumphisai"],["10055265","True Shop Lotus's Khukhan"],["10055279","True Shop Lotus's Srisaket"],["10055282","True Shop Lotus's Warinchmprap"],["80101663","True Shop Lotus's Muang Sam Sib (D)"],["80101676","True Shop Big C Phibun Mangsahan (D)"],["80101677","True Shop Lotus's Ubon Ratchathani (D)"],["80101680","True Shop Lotus's Talad Khunhan (D)"],["80101681","True Shop Lotus's Trakan Phuet Phon (D)"],["80101684","True Shop Lotus's Kantharalak (D)"],["80101685","True Shop Lotus's Det Udom (D)"],["80101712","True Shop Central Plaza Ubon Ratchathani (D)"]],"UPC - Lower Northeast":[["80100758","True Shop Lotus's Buayai Nakhonratchasima"],["80100487","True Shop The Mall Nakhonratchasima 3Fl."],["80100776","True Shop Lotus's Jor Hor Nakhonratchasima"],["80100872","True Shop Chatturat Chaiyaphum"],["80100765","True Shop Lotus's Prasat Surin"],["80100764","True Shop Lotus's Sungkha Surin"],["80100774","True Shop Lotus's Phimai Nakhonratchasima"],["80101225","True Shop Kao Yai Market Village"],["80101345","True Shop Down Town Nakhonratchasima"],["80100842","True Shop Terminal 21 Korat"],["80100772","True Shop Lotus's Kangkho Chaiyaphum"],["80101304","True Shop Robinson Buriram"],["80101290","True Shop Big C Korat 2"],["80101119","True Shop Central Plaza Nakhon Ratchasima"],["80100769","True Shop Lotus's Thatum Surin"],["80100781","True Shop Lotus's Lamplaimat Buriram"],["80101313","True Shop Robinson Chaiyaphum"],["80100780","True Shop Lotus's Prakonchai Buriram"],["80100845","True Shop Kaset Sombun Chaiyaphum"],["80101377","True Shop Big C Chaiyaphum"],["80101265","True Shop Chumphuang Nakhonratchasima"],["80100851","True shop Nongbunmak Nakhonratchasima"],["80100860","True Shop Sikhoraphum Surin"],["80101331","True Shop Big C Nongki Buriram"],["80100793","True Shop Lotus's Satuek Burirum"],["80100794","True Shop Lotus's Nonthai Nakhonratchasima"],["80100862","True Shop Pak Thong Chai Nakhonratchasima"],["80100863","True Shop Huai Thalaeng Nakhonratchasima"],["80100867","True Shop Dankhuntod Nakhonratchasima"],["80100869","True Shop Khon Buri Nakhonratchasima"],["80100870","True Shop Soeng Sang Nakhonratchasima"],["10055278","True Shop Lotus's Korat"],["10055281","True Shop Lotus's Surin"],["10055290","True Shop Lotus's Sikhio"],["80101650","True Shop Lotus's Pakthongchai (D)"],["80101653","True Shop Robinson Chaiyaphum (D)"],["80101654","True Shop Lotus's Bua Yai (D)"],["80101660","True Shop Lotus's Phimai Nakhon (D)"],["80101666","True Shop Lotus's Sangkha (D)"],["80101672","True Shop Big C Korat 2 (D)"],["80101673","True Shop Lotus's Prasat (D)"],["80101711","True Shop The Mall Korat (D)"]],"UPC - East":[["80101184","True Shop Chonburi"],["80100837","True Shop Central Chonburi"],["80101378","True Shop South Pattaya"],["80100615","True Shop Central Festival Pattaya Beach"],["80100479","True Shop Terminal 21 Pattaya"],["80100859","True Shop Trad"],["80100625","True Shop Central Plaza Rayong"],["80101189","True shop Central Plaza Si Racha"],["80101391","True Shop Central Chantaburi"],["10055249","True Shop Lotus's Wang NamYen"],["10055256","True Shop Lotus's Sri Mahaphoe"],["10055260","True Shop Lotus's Prachinburi"],["10055287","True Shop Lotus's Chonburi"],["80101695","True Shop Central Rayong (D)"],["80101700","True Shop Central Festival Pattaya (D)"]],"UPC - Lower North":[["80101306","True Shop Robinson Mae Sot"],["80101308","True Shop Robinson Khamphaengphet"],["80100854","True Shop Mini Lomsak Phetchabun"],["80100865","True Shop Taphan Hin Phichit"],["80101198","True Shop Central Phitsanulok"],["80100782","True Shop Lotus's Thaluang Phichit"],["10055259","True Shop Lotus's Kanuworaluk"],["10055264","True Shop Lotus's Maesod Tak"],["10055271","True Shop Lotus's Tak"],["10055277","True Shop Lotus's Bueng Samphan Phetchabun"],["80101656","True Shop Lotus's Pitsanulok (D)"],["80101658","True Shop Lotus's Lomsak (D)"],["80101659","True Shop Robinson Mae Sot (D)"],["80101665","True Shop Salokbat Kamphaengphet (D)"],["80101704","True Shop Central Plaza Phitsanulok (D)"]],"UPC - Lower South":[["80101222","True Shop Central Festival Hadyai Songkhla"],["80100839","True Shop Central Plaza Nakhonsithammarat"],["80100853","True Shop Mini Mueang Satun"],["10055291","True Shop Lotus's Satun"],["10055280","True Shop Lotus's Mae Khri"],["80101687","True Shop Ampur Ranot Songkhla (D)"],["80101692","True Shop Central Nakorn Sithammarat (D)"],["80101699","True Shop Central Festival Hat Yai (D)"]],"UPC - Upper North":[["80100750","True Shop Lotus's Fang Chiangmai"],["80100754","True Shop Lotus's Ruamchok Chiangmai"],["80101067","True Shop Central Airport Plaza Chiangmai"],["80101281","True Shop Big C Chiangmai"],["80100486","True Shop Central Festival Chiangmai"],["80100621","True Shop Central Chiangrai"],["80101117","True Shop Central Lampang"],["80101263","True Shop Maya Chiangmai"],["80100849","True Shop Mini Mueang Phayao"],["80101013","True Shop Mini Mueang Maehongson"],["80100858","True Shop Mini Mae Sai Chiangrai"],["80100792","True Shop Lotus's Payao"],["80100798","True Shop Lotus's Chiangkam Phayao"],["80100804","True Shop Lotus's Jomthong Chiangmai"],["10055263","True Shop Lotus's Nan"],["10055268","True Shop Lotus's Hangdong"],["10055269","True Shop Lotus's Chiang Khong"],["80101655","True Shop Lotus's Fang (D)"],["80101661","True Shop Lotus's Chom Thong (D)"],["80101670","True Shop Lotus's Ruam Choke (D)"]],"UPC - Upper Northeast":[["80100628","True Shop Regional Office Khonkaen"],["80100756","True Shop Lotus's Nongbualamphu"],["80100749","True Shop Lotus's Kalasin"],["80101289","True Shop Big C Banphai Khon Kaen"],["80100727","True Shop Lotus's Udonthani"],["80100760","True Shop Lotus's Nakhonphanom"],["80100770","True Shop Lotus's Buengkan"],["80101348","True Shop Asawann Shopping Complex Nongkhai"],["80101183","True Shop Central Khonkaen"],["80101196","True Shop Central Plaza Udonthani"],["80101292","True Shop Big C Bandung Udonthani"],["80101327","True Shop Big C Phangkhon Sakonnakhon"],["80101648","True Shop UD Town Udonthani"],["80101328","True Shop Big C Khamtakla Sakonnakhon"],["80100786","True Shop Lotus's Somdet Kalasin"],["80100873","True Shop Mueang Loei"],["80100799","True Shop Lotus's Phon Khonkaen"],["80100801","True Shop Lotus's Banphue Udonthani"],["80101346","True Shop Asawann Phonphisai Nong Khai"],["80100803","True Shop Lotus's Nongruea Khonkaen"],["80101294","True Shop Big C Loei"],["80100848","True Shop Wangsaphung Loei"],["80101293","True Shop Big C Khon Kaen2"],["10055261","True Shop Lotus's Thabor Nong Khai"],["10055272","True Shop Lotus's Udonthani-Nadee"],["10055274","True Shop Lotus's Loei"],["10055283","True Shop Lotus's Sakhon Nakorn"],["10055286","True Shop Lotus's That Panom"],["80101651","True Shop Lotus's Banphue (D)"],["80101652","True Shop Big C Kranuan (D)"],["80101657","True Shop Assawan Phonpisai (D)"],["80101664","True Shop Big C Loei (D)"],["80101668","True Shop Lotus's Nong Ruea (D)"],["80101671","True Shop Lotus's Sawandandin (D)"],["80101674","True Shop Lotus's Nakhon Phanom (D)"],["80101678","True Shop Big C Market Puwieng (D)"],["80101683","True Shop Big C Nong Khai (D)"],["80101690","True Shop Big Chiang Nongkhai (D)"],["80101697","True Shop Central Udon Thani (D)"],["80101703","True Shop Central Plaza Khon Kaen (D)"]],"UPC - Upper South":[["80101647","True Shop Central Krabi"],["80100476","True Shop Central Festival Phuket"],["80101115","True Shop Central Suratthani"],["80100838","True Shop Central Festival Samui Suratthani"],["80101122","True Shop Ocean Complex Chumphon"],["80100822","True Shop Lotus's Ranong"],["10055266","True Shop Lotus's Samui"],["10055267","True Shop Lotus's Samui - Lamai"],["10055270","True Shop Lotus's Chalong Phuket"],["80101662","True Shop Ocean Shopping Mall (D)"],["80101675","True Shop Big C Ranong (D)"],["80101688","True Shop Lotus's Chaiya (D)"],["80101701","True Shop Central Festival Samui (D)"],["80101705","True Shop Central Plaza Suratthani (D)"],["80101710","True Shop Phuket (D)"]],"UPC - West":[["80100721","True Shop Lotus's Nakhonpathom"],["80100627","True Shop Hua Hin"],["80100733","True Shop Lotus's Samphran"],["80100821","True Shop Station Lotus's Pranburi Prachuapkhirikhan"],["80101214","True Shop Central Plaza Salaya"],["80101629","True Shop Central Nakhonpathom"],["80100840","True Shop Central Plaza Mahachai"],["80101312","True Shop Robinson Kanchanaburi"],["80100784","True Shop Lotus's U-Thong Suphanburi"],["80100806","True Shop Lotus's Samchuk Suphanburi"],["10055252","True Shop Lotus's Tha Yang"],["10055251","True Shop Lotus's Supanburi"],["10055250","True Shop Lotus's Banglen"],["10055276","True Shop Lotus's Nakornchaisri"],["10055288","True Shop Lotus's Samut Sakhon"],["80101669","True Shop Lotus's Sam Chuk (D)"],["80101682","True Shop Lotus's Pran Buri (D)"],["80101686","True Shop Lotus's Amphur U-Thong (D)"],["80101693","True Shop Central Plaza Mahachai (D)"],["80101696","True Shop Central Salaya (D)"],["80101714","Ten Ten Shop Ban Tangsin Salaya"]]}};
+const AGENCIES=["DY","Skill","PNN","JAG","MTG"];
+const A_ITEMS=[
+ ["a1","ต้อนรับ & พาเยี่ยมชมสาขา","จุดบริการ / โซนสินค้า / มุมโปรโมชัน"],
+ ["a2","แนะนำทีมงานในสาขา","ผู้จัดการ รองผู้จัดการ เพื่อนร่วมทีม"],
+ ["a3","ปฐมนิเทศ","วิสัยทัศน์ วัฒนธรรมองค์กร ค่านิยมบริษัท"],
+ ["a4","แนะนำพื้นที่","ที่เก็บสิ่งของ ห้องน้ำ ที่ทานอาหารกลางวัน"],
+ ["a5","มอบหมายพี่เลี้ยง (Buddy/Mentor)",""],
+ ["a6","มาตรฐานการแต่งกาย & การบริการ","Grooming"],
+ ["a7","ภาพรวมสินค้า–บริการหลักในร้าน","เพื่อใช้พูดคุยกับลูกค้าเบื้องต้น"],
+ ["a8","ข้อควรรู้สำคัญ","รักษาข้อมูลลูกค้า (PDPA) / ไม่แชร์ User"],
+];
+const B_GROUPS=[
+ ["A. บุคลิกภาพ & ทัศนคติ",false,[
+  ["b1","1. บุคลิกภาพ การแต่งกาย",["แต่งกายตามระเบียบ สะอาด เรียบร้อย","ท่าทางสุภาพ มาตรงเวลา"]],
+  ["b2","2. Service Mind ยิ้มแย้ม",["ยิ้มแย้ม เป็นมิตรกับลูกค้าและทีม","อาสาช่วยเหลือโดยไม่ต้องรอสั่ง"]],
+  ["b3","3. สนใจ & กระตือรือร้น",["ซักถาม จดบันทึก สังเกตงานอย่างตั้งใจ","ไม่เล่นมือถือส่วนตัว อาสาลองทำ"]]]],
+ ["B. ★ เน้น การดูแลลูกค้า & เน้นนำเสนอการขาย",true,[
+  ["b4","4. ทักทายลูกค้าทันที",["ยิ้ม สบตา ทักทายภายใน 3–5 วินาที","ไม่ปล่อยให้ลูกค้ายืนรอเอง"]],
+  ["b5","5. ทักษะการดูแลลูกค้า",["ถามว่าให้ช่วยอะไร ดูแลระหว่างรอ","ดูแลจนจบ กล่าวขอบคุณและส่งลูกค้า"]],
+  ["b6","6. นำเสนอขายมือถือ / อุปกรณ์เสริมต่าง ๆ / SIM",["พี่เลี้ยงสอนการเสนอขายมือถือ/อุปกรณ์เสริม/SIM ให้ดูเป็นตัวอย่าง","ถามความต้องการลูกค้า 1–2 คำถาม","แนะนำสินค้า/โปรโมชันได้ 1 รายการ"]]]],
+ ["C. การสื่อสาร & การแก้ปัญหา",false,[
+  ["b7","7. การสื่อสาร",["พูดสุภาพ ชัดเจน มีหางเสียง ครับ/ค่ะ","ตั้งใจฟัง ไม่พูดแทรก"]],
+  ["b8","8. การตอบคำถาม",["ตอบตรงประเด็น ไม่ทราบให้ถาม ไม่เดา","สรุปได้ว่าวันนี้ได้เรียนรู้อะไร"]],
+  ["b9","9. แก้ไขปัญหาเฉพาะหน้า",["ตั้งสติ รับฟัง แสดง Empathy","ขอความช่วยเหลือได้ถูกคน"]]]],
+];
+const B_ALL=B_GROUPS.flatMap(g=>g[2]);
+const RATE={pass:"ผ่าน",improve:"ต้องพัฒนา"};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const DRAFT="ob-draft-v1";
+
+/* ---------- build form ---------- */
+const RRH_ORDER=["BMA","UPC I","UPC II"];
+const AREA_LIST=Object.keys(SHOPS.areas).sort((a,b)=>{const ra=RRH_ORDER.indexOf(SHOPS.rrh[a]),rb=RRH_ORDER.indexOf(SHOPS.rrh[b]);return (ra<0?9:ra)-(rb<0?9:rb)||a.localeCompare(b)});
+(function(){const byR={};AREA_LIST.forEach(a=>{const r=SHOPS.rrh[a]||"";(byR[r]=byR[r]||[]).push(a)});
+ $("#f_area").insertAdjacentHTML("beforeend",Object.keys(byR).map(r=>`<optgroup label="${esc(r)}">${byR[r].map(a=>`<option value="${esc(a)}">${esc(a)}</option>`).join("")}</optgroup>`).join(""));
+ $("#fArea").insertAdjacentHTML("beforeend",AREA_LIST.map(a=>`<option value="${esc(a)}">${esc(a)}</option>`).join(""));})();
+function fillShops(area,code){
+  const sel=$("#f_shop"),list=SHOPS.areas[area]||[];
+  sel.innerHTML=area?`<option value="">เลือกสาขา (${list.length} สาขา)</option>`+list.map(([c,n])=>`<option value="${esc(c)}">${esc(c)} – ${esc(n)}</option>`).join(""):'<option value="">เลือก Area ก่อน</option>';
+  sel.disabled=!area; sel.value=code&&list.some(x=>x[0]===code)?code:""; showShop();
+}
+function shopOf(code){for(const a in SHOPS.areas){const h=SHOPS.areas[a].find(x=>x[0]===code);if(h)return {area:a,code:h[0],name:h[1]}}return null}
+function showShop(){const s=shopOf($("#f_shop").value);$("#shopCard").innerHTML=s?`<b>${esc(s.code)}</b> · ${esc(s.name)}`:"ยังไม่ได้เลือกสาขา"}
+$("#f_area").addEventListener("change",()=>fillShops($("#f_area").value,""));
+$("#f_shop").addEventListener("change",showShop);
+$("#agencyChips").innerHTML=AGENCIES.map(a=>`<label class="seg"><input type="radio" name="agency" value="${a}" id="ag_${a}">${a}</label>`).join("");
+$("#aList").innerHTML=A_ITEMS.map(([k,t,d])=>`<label class="check"><input type="checkbox" id="${k}"><span><b>${t}</b>${d?`<small>${d}</small>`:""}</span></label>`).join("");
+let bh="";
+B_GROUPS.forEach(([title,star,items])=>{
+  bh+=`<div class="group-h${star?" star":""}">${title}</div>`;
+  items.forEach(([k,t,bul])=>{bh+=itemHTML(k,`<h4>${t}</h4><ul>${bul.map(b=>`<li>${b}</li>`).join("")}</ul>`,star)});
+});
+$("#bList").innerHTML=bh;
+function itemHTML(k,left,star){
+  return `<div class="item${star?" star":""}" id="row_${k}"><div>${left}</div>
+  <div class="rate"><label class="seg ok"><input type="radio" name="${k}" value="pass" id="${k}_pass">ผ่าน</label><label class="seg bad"><input type="radio" name="${k}" value="improve" id="${k}_improve">ต้องพัฒนา</label></div>
+  <label class="field"><span class="hint" id="${k}_lbl">คำแนะนำ</span><input type="text" id="${k}_note" autocomplete="off"></label></div>`;
+}
+
+/* ---------- photo ---------- */
+let photoData="";
+async function shrink(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=url});
+    let max=1000,q=0.75,out="";
+    for(let n=0;n<6;n++){
+      const sc=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+      const c=document.createElement("canvas");c.width=Math.round(img.naturalWidth*sc);c.height=Math.round(img.naturalHeight*sc);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      out=c.toDataURL("image/jpeg",q);
+      if(out.length<170000)break; max=Math.round(max*0.8);q=Math.max(0.5,q-0.07);
+    }
+    return out;
+  }finally{URL.revokeObjectURL(url)}
+}
+function showPhoto(){
+  const has=!!photoData;$("#photoPrev").hidden=!has;$("#photoPick").hidden=has;$("#photoAct").hidden=!has;
+  if(has)$("#photoPrev").src=photoData;else $("#photoPrev").removeAttribute("src");
+  if(has)$("#photoBox").classList.remove("missing");
+}
+$("#f_photo").addEventListener("change",async e=>{
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  $("#photoPickTxt").textContent="กำลังเตรียมรูป…";
+  try{photoData=await shrink(f);$("#photoMsg").textContent=""}
+  catch(err){photoData="";$("#photoPickTxt").textContent="เปิดรูปนี้ไม่ได้ ลองถ่ายหรือเลือกรูปใหม่ (JPG/PNG)";e.target.value="";showPhoto();return}
+  $("#photoPickTxt").textContent="แตะเพื่อถ่ายรูป หรือเลือกรูปจากเครื่อง";e.target.value="";showPhoto();
+});
+$("#photoRetake").onclick=()=>{photoData="";showPhoto();$("#f_photo").click()};
+
+/* ---------- read / write form ---------- */
+const val=id=>($("#"+id).value||"").trim();
+const radio=n=>(document.querySelector(`input[name="${n}"]:checked`)||{}).value||"";
+function collect(){
+  const a={};A_ITEMS.forEach(([k])=>a[k]=$("#"+k).checked);
+  const b={};B_ALL.forEach(([k])=>b[k]={r:radio(k),note:val(k+"_note")});
+  const sh=shopOf($("#f_shop").value)||{};
+  return {name:val("f_name"),area:$("#f_area").value,rrh:SHOPS.rrh[$("#f_area").value]||"",shopCode:sh.code||"",branch:sh.name||"",obDate:$("#f_date").value,checkIn:$("#f_in").value,checkOut:$("#f_out").value,
+    agency:radio("agency"),a,friend:val("f_friend"),buddy:val("f_buddy"),b,result:radio("result"),reason:val("f_reason"),
+    learn:val("f_learn"),ask:val("f_ask"),mgr:val("f_mgr"),photo:photoData};
+}
+function fill(d){
+  d=d||{};photoData=d.photo||"";showPhoto();
+  $("#f_area").value=d.area&&SHOPS.areas[d.area]?d.area:"";fillShops($("#f_area").value,d.shopCode||"");
+  [["f_name","name"],["f_date","obDate"],["f_in","checkIn"],["f_out","checkOut"],["f_friend","friend"],["f_buddy","buddy"],["f_reason","reason"],["f_learn","learn"],["f_ask","ask"],["f_mgr","mgr"]].forEach(([id,k])=>$("#"+id).value=d[k]||"");
+  document.querySelectorAll('#obForm input[type=radio]').forEach(r=>r.checked=false);
+  if(d.agency&&$("#ag_"+d.agency))$("#ag_"+d.agency).checked=true;
+  A_ITEMS.forEach(([k])=>$("#"+k).checked=!!(d.a&&d.a[k]));
+  B_ALL.map(x=>x[0]).forEach(k=>{const x=(d.b||{})[k]||{};$("#"+k+"_note").value=x.note||"";if(x.r&&$(`#${k}_${x.r}`))$(`#${k}_${x.r}`).checked=true});
+  if(d.result)$("#r_"+d.result).checked=true;
+  syncReason();
+}
+function syncReason(){
+  B_ALL.map(x=>x[0]).forEach(k=>{const imp=radio(k)==="improve",lb=$("#"+k+"_lbl"),inp=$("#"+k+"_note");
+    lb.className=imp?"hint req":"hint";lb.textContent=imp?"คำแนะนำ (ต้องระบุ)":"คำแนะนำ";inp.placeholder=imp?"ระบุสิ่งที่ควรพัฒนา":"";
+    if(!imp||inp.value.trim())inp.closest(".field").classList.remove("missing")});
+}
+let draftTimer;
+$("#obForm").addEventListener("input",()=>{syncReason();clearTimeout(draftTimer);draftTimer=setTimeout(()=>{try{localStorage.setItem(DRAFT,JSON.stringify({...collect(),photo:""}))}catch(e){}},400)});
+try{const d=JSON.parse(localStorage.getItem(DRAFT)||"null");if(d)fill(d)}catch(e){}
+if(!$("#f_date").value){const t=new Date();$("#f_date").value=new Date(t-t.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
+
+function validate(d){
+  const miss=[];
+  document.querySelectorAll(".missing").forEach(e=>e.classList.remove("missing"));
+  const need=(ok,label,id)=>{if(!ok){miss.push(label);if(id){const el=document.getElementById(id);(el.closest(".field,.check,.item,.chips")||el).classList.add("missing")}}};
+  need(d.name,"ชื่อ-นามสกุล","f_name");
+  need(d.area,"Area","f_area");
+  need(d.shopCode,"Shop Code / Shop Name","f_shop");
+  need(d.obDate,"วันที่ On Board","f_date");
+  need(d.checkIn,"Check In","f_in");
+  need(d.checkOut,"Check Out","f_out");
+  need(d.agency,"Agency","ag_DY");
+  if(!d.photo){miss.push("รูปพนักงานคู่กับผู้จัดการสาขา");$("#photoBox").classList.add("missing")}
+  const notA=A_ITEMS.filter(([k])=>!d.a[k]);
+  notA.forEach(([k])=>$("#"+k).closest(".check").classList.add("missing"));
+  if(notA.length)miss.push(`ส่วน A ยังไม่ได้ติ๊ก ${notA.length} ข้อ`);
+  need(d.friend,"เพื่อนที่ได้รู้จัก","f_friend");
+  need(d.buddy,"ชื่อพี่เลี้ยง","f_buddy");
+  const unrated=B_ALL.filter(([k])=>!d.b[k].r);
+  unrated.forEach(([k])=>$("#row_"+k).classList.add("missing"));
+  if(unrated.length)miss.push(`ผลประเมินหัวข้อ ${unrated.map(x=>x[0].slice(1)).join(", ")}`);
+  const noNote=B_ALL.map(x=>x[0]).filter(k=>d.b[k].r==="improve"&&!d.b[k].note);
+  noNote.forEach(k=>$("#"+k+"_note").closest(".field").classList.add("missing"));
+  if(noNote.length)miss.push(`คำแนะนำของหัวข้อที่ "ต้องพัฒนา" (${noNote.map(k=>k.slice(1)).join(", ")})`);
+  need(d.result,"สรุปผล ผ่าน/ไม่ผ่าน","r_pass");
+  need(d.reason,"เหตุผล","f_reason");
+  need(d.learn,'คำตอบ "วันนี้ได้เรียนรู้อะไรบ้าง?"',"f_learn");
+  need(d.ask,'คำตอบ "มีอะไรสงสัย หรืออยากเตรียมตัวเรื่องใด?"',"f_ask");
+  need(d.mgr,"ชื่อผู้จัดการสาขา / ผู้ประเมิน","f_mgr");
+  const first=document.querySelector(".missing");
+  if(first)first.scrollIntoView({behavior:"smooth",block:"center"});
+  return miss;
+}
+
+/* ---------- Google Sheet connection ---------- */
+/* วาง URL ของ Web App (Google Apps Script) ที่ได้จากขั้นตอน Deploy ไว้ระหว่างเครื่องหมายคำพูดด้านล่าง */
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbxVYfMWNnqEreloqg1R5AbiKV4tc2pUMpFyX_vL97Kd46kvhHfk4uj6cAQ7k3S2jDc2Tg/exec";
+let booted=false,isAdmin=false,adminKey="";
+const MINE="ob-mine-v1";
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2600)}
+function note(t){const n=$("#accessNote");n.textContent=t;n.hidden=!t}
+if(!SCRIPT_URL)note("ยังไม่ได้ตั้งค่า SCRIPT_URL ในไฟล์นี้ จึงยังดึงข้อมูลไม่ได้");
+async function api(payload){
+  const r=await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+  const j=await r.json(); if(!j.ok)throw Object.assign(new Error(j.error||"error"),{code:j.error}); return j;
+}
+
+$("#obForm").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  const d=collect(),miss=validate(d),msg=$("#formMsg");
+  if(miss.length){msg.className="msg err";msg.textContent="ยังขาด: "+miss.join(" • ");return}
+  if(!SCRIPT_URL){msg.className="msg err";msg.textContent="ยังไม่ได้ตั้งค่าการเชื่อมต่อ Google Sheet กรุณาแจ้งผู้ดูแลระบบ";return}
+  const btn=$("#submitBtn");btn.disabled=true;msg.className="msg";msg.textContent="กำลังส่ง…";
+  const body={...d,v:1,submittedAt:new Date().toISOString(),improveCount:Object.values(d.b).filter(x=>x.r==="improve").length};
+  const photo=body.photo;delete body.photo;
+  const t=table2d([body]);
+  try{
+    const res=await api({action:"submit",record:body,header:t[0],row:t[1],photo});
+    msg.className="msg ok";msg.textContent=`ส่งแบบฟอร์มของ ${d.name} เรียบร้อยแล้ว`;
+    try{const m=JSON.parse(localStorage.getItem(MINE)||"[]");m.unshift({...body,_id:res.id,photoUrl:res.photoUrl||""});localStorage.setItem(MINE,JSON.stringify(m.slice(0,200)))}catch(e){}
+    loadMine();
+    try{localStorage.removeItem(DRAFT)}catch(e){}
+    fill({obDate:d.obDate,area:d.area,shopCode:d.shopCode,mgr:d.mgr});
+    window.scrollTo({top:0,behavior:"smooth"});toast("ส่งแล้ว");
+  }catch(e){
+    msg.className="msg err";msg.textContent="ส่งไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วกดส่งอีกครั้ง ข้อมูลที่กรอกยังอยู่ครบ";
+  }finally{btn.disabled=false}
+});
+$("#clearBtn").onclick=()=>{$("#clearConfirm").hidden=false};
+$("#clearNo").onclick=()=>{$("#clearConfirm").hidden=true};
+$("#clearYes").onclick=()=>{fill({});try{localStorage.removeItem(DRAFT)}catch(e){};$("#clearConfirm").hidden=true;$("#formMsg").textContent=""};
+
+/* ---------- views ---------- */
+const PAGE="support";
+function route(){
+  let v=(location.hash||"#form").slice(1).toLowerCase();
+  if(!["form","mine"].includes(v))v="form";
+  if(PAGE==="support")v="admin";
+  $("#viewForm").hidden=v!=="form";$("#viewMine").hidden=v!=="mine";$("#viewAdmin").hidden=v!=="admin";
+  $("#wrap").classList.toggle("wide",v==="admin");
+  document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.dataset.view===v)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+}
+addEventListener("hashchange",route);route();
+
+const thDate=s=>{if(!s)return"–";const [y,m,d]=s.split("-");return `${d}/${m}/${+y+543}`};
+const thStamp=s=>{if(!s)return"–";const t=new Date(s);return t.toLocaleString("th-TH",{dateStyle:"short",timeStyle:"short"})};
+const resPill=r=>r==="pass"?'<span class="pill ok">ผ่าน</span>':r==="fail"?'<span class="pill bad">ไม่ผ่าน</span>':'<span class="pill n">–</span>';
+
+/* mine */
+let mine=[];
+function loadMine(){try{mine=JSON.parse(localStorage.getItem(MINE)||"[]")}catch(e){mine=[]}renderMine()}
+function renderMine(){
+  const box=$("#mineList");
+  if(!mine.length){box.innerHTML='<div class="empty">ยังไม่มีแบบฟอร์มที่ส่งจากเครื่องนี้ เมื่อกดส่งจากแท็บ "กรอกแบบฟอร์ม" รายการจะแสดงที่นี่</div>';return}
+  box.innerHTML=`<div class="tablebox" style="margin-top:0"><table style="min-width:520px"><thead><tr><th>วันที่ OB</th><th>ชื่อ-นามสกุล</th><th>Shop</th><th>ผล</th><th>ส่งเมื่อ</th></tr></thead><tbody>${
+    mine.map((r,i)=>`<tr data-i="${i}" tabindex="0"><td class="num">${thDate(r.obDate)}</td><td>${esc(r.name)}</td><td>${esc(r.branch)}</td><td>${resPill(r.result)}</td><td class="num">${thStamp(r.submittedAt)}</td></tr>`).join("")}</tbody></table></div>`;
+  box.querySelectorAll("tr[data-i]").forEach(tr=>{const go=()=>openDetail(mine[+tr.dataset.i],false);tr.onclick=go;tr.onkeydown=e=>{if(e.key==="Enter")go()}});
+}
+
+/* admin */
+let rows=[];
+AGENCIES.forEach(a=>$("#fAgency").insertAdjacentHTML("beforeend",`<option value="${a}">${a}</option>`));
+["q","fArea","fAgency","fResult","fFrom","fTo"].forEach(id=>$("#"+id).addEventListener("input",renderAdmin));
+function filtered(){
+  const ar=$("#fArea").value,q=$("#q").value.trim().toLowerCase(),ag=$("#fAgency").value,rs=$("#fResult").value,fr=$("#fFrom").value,to=$("#fTo").value;
+  return rows.filter(r=>(!q||[r.name,r.branch,r.shopCode,r.buddy,r.mgr].join(" ").toLowerCase().includes(q))&&(!ar||r.area===ar)&&(!ag||r.agency===ag)&&(!rs||r.result===rs)&&(!fr||r.obDate>=fr)&&(!to||r.obDate<=to));
+}
+function renderAdmin(){
+  rows=rows.slice().sort((a,b)=>(b.submittedAt||"").localeCompare(a.submittedAt||""));
+  const f=filtered();
+  const pass=f.filter(r=>r.result==="pass").length,fail=f.filter(r=>r.result==="fail").length;
+  const byAg=AGENCIES.map(a=>[a,f.filter(r=>r.agency===a).length]);
+  $("#stats").innerHTML=`<div class="stat"><b>${f.length}</b><span>แบบฟอร์ม${f.length!==rows.length?` (จาก ${rows.length})`:""}</span></div><div class="stat ok"><b>${pass}</b><span>ผ่าน</span></div><div class="stat bad"><b>${fail}</b><span>ไม่ผ่าน</span></div>`+
+    byAg.map(([a,n])=>`<div class="stat"><b>${n}</b><span>${a}</span></div>`).join("");
+  $("#adminRows").innerHTML=f.map((r,i)=>`<tr data-i="${i}" tabindex="0"><td class="num">${thDate(r.obDate)}</td><td>${esc(r.name)}</td><td>${esc(r.agency)}</td><td>${esc(r.area||"–")}</td><td><span class="hint">${esc(r.shopCode||"")}</span> ${esc(r.branch)}</td><td>${resPill(r.result)}</td><td class="num">${r.improveCount?`<span class="pill bad">${r.improveCount} หัวข้อ</span>`:"–"}</td><td>${esc(r.mgr)}</td><td class="num">${thStamp(r.submittedAt)}</td></tr>`).join("");
+  $("#adminRows").querySelectorAll("tr").forEach(tr=>{const go=()=>openDetail(f[+tr.dataset.i],true);tr.onclick=go;tr.onkeydown=e=>{if(e.key==="Enter")go()}});
+  const em=$("#adminEmpty");
+  em.hidden=f.length>0;
+  em.textContent=rows.length?"ไม่พบรายการตามเงื่อนไขที่เลือก":"ยังไม่มีแบบฟอร์มที่ส่งเข้ามา เมื่อสาขากดส่ง รายการจะขึ้นที่นี่ทันที";
+}
+async function loadAll(){
+  const m=$("#adminMsg");m.className="msg";m.textContent="กำลังโหลดข้อมูล…";
+  try{
+    const r=await fetch(SCRIPT_URL+"?action=list&key="+encodeURIComponent(adminKey));
+    const j=await r.json();
+    if(!j.ok){if(j.error==="bad_key"){logout("รหัส Support ไม่ถูกต้อง")}else{m.className="msg err";m.textContent="โหลดข้อมูลไม่สำเร็จ กด โหลดใหม่"}return false}
+    rows=j.rows;m.textContent=`อัปเดตล่าสุด ${new Date().toLocaleTimeString("th-TH",{timeStyle:"short"})} น.`;renderAdmin();return true;
+  }catch(e){m.className="msg err";m.textContent="เชื่อมต่อ Google Sheet ไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วกด โหลดใหม่";return false}
+}
+function showAdmin(on){$("#loginBox").hidden=on;$("#adminBody").hidden=!on}
+function logout(msg){adminKey="";isAdmin=false;try{sessionStorage.removeItem("ob-admin")}catch(e){};showAdmin(false);$("#loginMsg").className="msg err";$("#loginMsg").textContent=msg||""}
+$("#loginForm").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  if(!SCRIPT_URL){$("#loginMsg").className="msg err";$("#loginMsg").textContent="ยังไม่ได้ตั้งค่า SCRIPT_URL ในไฟล์นี้";return}
+  adminKey=$("#adminKey").value;$("#loginBtn").disabled=true;$("#loginMsg").className="msg";$("#loginMsg").textContent="กำลังตรวจสอบ…";
+  showAdmin(true);
+  const ok=await loadAll();$("#loginBtn").disabled=false;
+  if(ok){isAdmin=true;$("#loginMsg").textContent="";$("#adminKey").value="";try{sessionStorage.setItem("ob-admin",adminKey)}catch(e){}}
+  else if(adminKey){/* bad key handled in loadAll */ if(!$("#adminBody").hidden&&!rows.length){}}
+});
+$("#logoutBtn").onclick=()=>logout("");
+$("#refreshBtn").onclick=()=>loadAll();
+
+/* detail */
+function detailHTML(r){
+  const items=B_ALL.map(([k,t])=>[t,(r.b||{})[k]||{}]);
+  const o=(r.b||{}).b10||{};if(o.text||o.r)items.push([`10. อื่น ๆ : ${o.text||"-"}`,o]);
+  return `<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><h2>${esc(r.name)}</h2><div class="hint">${esc(r.shopCode||"")} ${esc(r.branch)} • ${esc(r.area||"")} • ${esc(r.agency)} • OB ${thDate(r.obDate)}</div></div><button type="button" id="closeD">ปิด</button></div>
+  ${r.photo?`<section class="blk"><img class="dphoto" src="${esc(r.photo)}" alt="รูปพนักงานคู่กับผู้จัดการสาขา"></section>`:r.photoUrl?`<section class="blk"><a href="${esc(r.photoUrl)}" target="_blank" rel="noopener">เปิดรูปพนักงานคู่ผู้จัดการ (Google Drive)</a></section>`:""}
+  <section class="blk"><dl class="dl">
+   <dt>Check In / Out</dt><dd>${esc(r.checkIn||"–")} – ${esc(r.checkOut||"–")} น.</dd>
+   <dt>ผลสรุป</dt><dd>${resPill(r.result)} ${r.reason?esc(r.reason):""}</dd>
+   <dt>พี่เลี้ยง</dt><dd>${esc(r.buddy||"–")}</dd>
+   <dt>เพื่อนที่ได้รู้จัก</dt><dd>${esc(r.friend||"–")}</dd>
+   <dt>ผู้ประเมิน</dt><dd>${esc(r.mgr||"–")}</dd>
+   <dt>ส่งเมื่อ</dt><dd>${thStamp(r.submittedAt)}</dd></dl></section>
+  <section class="blk"><div class="blk-h"><span class="tag">A</span><h2>สิ่งที่สาขาแนะนำ</h2></div>
+   ${A_ITEMS.map(([k,t])=>`<div>${(r.a||{})[k]?'<span class="pill ok">แนะนำแล้ว</span>':'<span class="pill n">ยังไม่ได้ติ๊ก</span>'} ${t}</div>`).join("")}</section>
+  <section class="blk"><div class="blk-h"><span class="tag">B</span><h2>พฤติกรรมระหว่างวัน</h2></div>
+   ${items.map(([t,x])=>`<div class="ditem"><b>${esc(t)}</b><span>${x.r==="pass"?'<span class="pill ok">ผ่าน</span>':x.r==="improve"?'<span class="pill bad">ต้องพัฒนา</span>':'<span class="pill n">–</span>'}</span>${x.note?`<div class="note">คำแนะนำ: ${esc(x.note)}</div>`:""}</div>`).join("")}</section>
+  <section class="blk"><div class="blk-h"><span class="tag">C</span><h2>คุยกันท้ายวัน</h2></div><dl class="dl">
+   <dt>ได้เรียนรู้อะไร</dt><dd>${esc(r.learn||"–")}</dd><dt>สงสัย / อยากเตรียมตัว</dt><dd>${esc(r.ask||"–")}</dd></dl></section>`;
+}
+function openDetail(r,admin){
+  const ov=$("#overlay");
+  ov.innerHTML=`<div class="drawer" role="dialog" aria-modal="true">${detailHTML(r)}${admin?`<div class="actions"><button type="button" class="danger" id="delBtn">ลบรายการนี้</button><span id="delAsk" hidden><span class="msg">ลบแล้วกู้คืนไม่ได้ ยืนยัน?</span> <button type="button" class="danger" id="delYes">ลบ</button> <button type="button" id="delNo">ยกเลิก</button></span></div>`:""}</div>`;
+  ov.hidden=false;
+  const close=()=>{ov.hidden=true;ov.innerHTML=""};
+  ov.onclick=e=>{if(e.target===ov)close()};
+  $("#closeD").onclick=close;$("#closeD").focus();
+  ov.onkeydown=e=>{if(e.key==="Escape")close()};
+  if(admin){
+    $("#delBtn").onclick=()=>{$("#delAsk").hidden=false};
+    $("#delNo").onclick=()=>{$("#delAsk").hidden=true};
+    $("#delYes").onclick=async()=>{
+      try{await api({action:"delete",key:adminKey,id:r._id});rows=rows.filter(x=>x._id!==r._id);renderAdmin();close();toast("ลบแล้ว")}
+      catch(e){toast("ลบไม่สำเร็จ ลองอีกครั้ง")}
+    };
+  }
+}
+
+/* export */
+function table2d(list){
+  const head=["ส่งเมื่อ","วันที่ OB","ชื่อ-นามสกุล","Agency","RRH","Area","Shop Code","Shop Name","Check In","Check Out",
+    ...A_ITEMS.map(x=>"A: "+x[1]),"เพื่อนที่ได้รู้จัก","พี่เลี้ยง",
+    ...B_ALL.flatMap(([,t])=>[t,t+" (คำแนะนำ)"]),"รูปพนักงานคู่ผู้จัดการ","จำนวนหัวข้อต้องพัฒนา",
+    "ผลสรุป","เหตุผล","วันนี้ได้เรียนรู้อะไร","สงสัย/อยากเตรียมตัว","ผู้จัดการสาขา/ผู้ประเมิน"];
+  const lines=[head];
+  list.forEach(r=>{const b=r.b||{},o=b.b10||{};lines.push([thStamp(r.submittedAt),thDate(r.obDate),r.name,r.agency,r.rrh||"",r.area||"",r.shopCode||"",r.branch,r.checkIn,r.checkOut,
+    ...A_ITEMS.map(([k])=>(r.a||{})[k]?"✓":""),r.friend,r.buddy,
+    ...B_ALL.flatMap(([k])=>[RATE[(b[k]||{}).r]||"",(b[k]||{}).note||""]),r.photoUrl||(r.photo?"มีรูป":""),r.improveCount||0,
+    r.result==="pass"?"ผ่าน":r.result==="fail"?"ไม่ผ่าน":"",r.reason,r.learn,r.ask,r.mgr])});
+  return lines;
+}
+function csv(list){
+  const q=v=>{const s=String(v??"");return /[",\n\r]/.test(s)?`"${s.replace(/"/g,'""')}"`:s};
+  return table2d(list).map(l=>l.map(q).join(",")).join("\r\n");
+}
+function tsv(list){
+  return table2d(list).map(l=>l.map(v=>String(v??"").replace(/[\t\r\n]+/g," ")).join("\t")).join("\n");
+}
+$("#exportBtn").onclick=async()=>{
+  const f=filtered(),m=$("#adminMsg");
+  if(!f.length){m.className="msg err";m.textContent="ไม่มีรายการให้ดาวน์โหลด";return}
+  const t=new Date(),stamp=`${t.getFullYear()}${String(t.getMonth()+1).padStart(2,"0")}${String(t.getDate()).padStart(2,"0")}`;
+  const url=URL.createObjectURL(new Blob(["\ufeff"+csv(f)],{type:"text/csv;charset=utf-8"}));
+  const a=document.createElement("a");a.href=url;a.download=`OB_Checklist_${stamp}.csv`;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  m.className="msg ok";m.textContent=`ดาวน์โหลด ${f.length} รายการแล้ว`;
+};
+$("#copyBtn").onclick=async()=>{
+  const f=filtered(),m=$("#adminMsg");
+  if(!f.length){m.className="msg err";m.textContent="ไม่มีรายการให้คัดลอก";return}
+  try{await navigator.clipboard.writeText(tsv(f));m.className="msg ok";m.textContent=`คัดลอก ${f.length} รายการแล้ว วางใน Excel ได้เลย`}
+  catch(e){m.className="msg err";m.textContent="คัดลอกไม่สำเร็จในหน้านี้ ใช้ปุ่มดาวน์โหลดแทน"}
+};
+
+/* ---------- boot ---------- */
+loadMine();
+try{const k=sessionStorage.getItem("ob-admin");if(k&&SCRIPT_URL){adminKey=k;showAdmin(true);loadAll()}}catch(e){}
+booted=true;route();
+})();
+</script>
+</body>
+</html>
