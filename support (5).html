@@ -1,0 +1,980 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>New Comer Checklist Support</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Mitr:wght@400;500&display=swap">
+<style>
+/* Layout: one calm column like a paper form, tabs on top; admin gets a wide table view */
+:root{
+  --bg:#F5F8FC; --card:#FFFFFF; --ink:#1E2836; --sub:#5B6879; --line:#DFE6F0; --faint:#A9B4C2;
+  --accent:#1F5FBF; --accent-soft:#E4EDFB; --teal:#2F8F7A; --teal-soft:#E5F4EF; --lav:#EAF0F8; --cream:#F0F5FC; --sky:#E8F3FA;
+  --warn:#B4541A; --warn-soft:#FCEBDD;
+  --display:"Mitr","IBM Plex Sans Thai",Tahoma,sans-serif;
+  --body:"IBM Plex Sans Thai",Tahoma,"Noto Sans Thai",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121821; --card:#1B2330; --ink:#E9EEF5; --sub:#A3AFBF; --line:#2C3747; --faint:#5E6B7C;
+  --accent:#6FA3F2; --accent-soft:#1E2E48; --teal:#5CC2A9; --teal-soft:#1F3330; --lav:#212C3B; --cream:#1D2838; --sky:#1B2B38;
+  --warn:#F0A06A; --warn-soft:#3A2A1E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121821; --card:#1B2330; --ink:#E9EEF5; --sub:#A3AFBF; --line:#2C3747; --faint:#5E6B7C;
+  --accent:#6FA3F2; --accent-soft:#1E2E48; --teal:#5CC2A9; --teal-soft:#1F3330; --lav:#212C3B; --cream:#1D2838; --sky:#1B2B38;
+  --warn:#F0A06A; --warn-soft:#3A2A1E; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap.wide{max-width:1240px}
+h1,h2,h3{font-family:var(--display);font-weight:500;text-wrap:balance;margin:0}
+h1{font-size:1.6rem;color:var(--accent);line-height:1.3}
+.lead{color:var(--sub);margin:4px 0 0}
+header.top{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between;border-top:4px solid var(--accent);padding-top:16px}
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap}
+nav.tabs a{font-family:var(--display);text-decoration:none;color:var(--sub);padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:.95rem}
+nav.tabs a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff}
+nav.tabs a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,label.seg:focus-within{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:2px}
+.notice{margin-top:14px;padding:10px 14px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:.95rem}
+section.blk{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 20px;margin-top:16px}
+.blk-h{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:12px}
+.tag{font-family:var(--display);background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:0 9px;font-size:.95rem}
+.blk-h h2{font-size:1.15rem}
+.hint{color:var(--sub);font-size:.88rem}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px 16px}
+.pairrow{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px 16px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field>span{font-size:.9rem;color:var(--sub)}
+.photo{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.photo-pick{display:flex;align-items:center;justify-content:center;width:100%;max-width:420px;min-height:120px;border:2px dashed var(--line);border-radius:14px;background:var(--bg);color:var(--sub);cursor:pointer;text-align:center;padding:16px}
+.photo-pick input{position:absolute;opacity:0;width:1px;height:1px}
+.photo-pick:focus-within{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent)}
+.photo.missing .photo-pick{border-color:var(--warn);background:var(--warn-soft)}
+#photoPrev{max-width:min(420px,100%);max-height:320px;border-radius:12px;border:1px solid var(--line);object-fit:contain}
+.dphoto{max-width:100%;max-height:360px;border-radius:12px;border:1px solid var(--line)}
+.kinds{display:inline-flex;gap:4px;margin-top:14px;padding:4px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+.kinds button{border:0;border-radius:999px;padding:7px 16px;font-family:var(--display);background:transparent;color:var(--sub)}
+.kinds button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.9rem;color:var(--sub)}
+.legend b{color:var(--ink);font-weight:600}
+.progress{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.bar{flex:1;min-width:160px;height:10px;border-radius:999px;background:var(--line);overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--teal);border-radius:999px;transition:width .3s}
+.dayhead{display:flex;gap:14px;align-items:flex-start;margin-bottom:6px}
+.daybadge{flex:none;font-family:var(--display);background:var(--accent);color:#fff;border-radius:12px;padding:6px 12px;text-align:center;line-height:1.2}
+.daybadge small{display:block;font-size:.72rem;opacity:.85}
+.goal{font-family:var(--display);font-size:1.08rem}
+.outcome{color:var(--sub);font-size:.92rem;margin-top:2px}
+.verify{margin-top:6px;font-size:.88rem;background:var(--teal-soft);color:var(--teal);border-radius:8px;padding:4px 10px;display:inline-block}
+.loadbox{margin-top:14px;padding:14px;border-radius:12px;background:var(--cream);display:grid;gap:10px}
+button.bd-save{border-color:var(--teal);color:var(--teal);background:var(--teal-soft);font-weight:500}
+.savebar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.savebar .msg{font-size:.92rem}
+.conflict{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.dayinfo{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 14px;margin:10px 0 4px;padding:12px;border-radius:12px;background:var(--lav)}
+.dayinfo input{background:var(--card)}
+.bitem{padding:14px 0;border-top:1px dashed var(--line);display:grid;gap:8px}
+.bitem .cat{font-size:.8rem;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:1px 8px;justify-self:start}
+.bitem h4{margin:0;font-size:1rem;font-weight:600}
+.bitem .act{font-size:.9rem;color:var(--sub)}
+.bitem .act b{color:var(--ink);font-weight:500}
+.bitem .remark{font-size:.86rem;background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:3px 10px;justify-self:start}
+.bctl{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:8px 12px;align-items:end}
+.bctl .chips{grid-column:1/-1}
+@media (max-width:640px){.bctl{grid-template-columns:1fr}}
+.bitem.missing{background:var(--warn-soft);border-radius:12px;padding-left:10px;padding-right:10px}
+label.seg.mid:has(input:checked){background:var(--accent);border-color:var(--accent)}
+.followlist{margin:6px 0 0;padding-left:18px}
+.jimg{display:block;width:100%;padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;cursor:zoom-in}
+.jimg img{display:block;width:100%;height:auto}
+.lightbox{position:fixed;inset:0;z-index:40;background:color-mix(in srgb,#000 82%,transparent);overflow:auto;padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));cursor:zoom-out}
+.lightbox img{display:block;width:max(100%,1200px);max-width:none;height:auto;margin:auto;border-radius:8px}
+table.eo{min-width:720px}
+table.eo td:first-child{white-space:nowrap;font-family:var(--display);color:var(--accent)}
+table.eo td:nth-child(2){font-weight:600;min-width:150px}
+table.eo tbody tr{cursor:default}
+.shopcard{min-height:44px;border-radius:10px;padding:9px 12px;background:var(--accent-soft);color:var(--sub);font-size:.95rem}
+.shopcard b{color:var(--accent);font-variant-numeric:tabular-nums}
+.req::after{content:" *";color:var(--accent)}
+input[type=text],input[type=date],input[type=time],input[type=search],select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%;min-width:0}
+textarea{min-height:76px;resize:vertical}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+label.seg{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;background:var(--bg);user-select:none}
+label.seg input{position:absolute;opacity:0;pointer-events:none}
+label.seg:has(input:checked){background:var(--accent);border-color:var(--accent);color:#fff}
+label.seg.ok:has(input:checked){background:var(--teal);border-color:var(--teal)}
+label.seg.bad:has(input:checked){background:var(--warn);border-color:var(--warn)}
+.focusrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px}
+.focusrow>div{border-radius:14px;padding:14px 16px}
+.focusrow h3{font-size:1.02rem;margin-bottom:4px}
+.f-do{background:var(--teal-soft)} .f-do h3{color:var(--teal)}
+.f-no{background:var(--warn-soft)} .f-no h3{color:var(--warn)}
+.focusrow ul{margin:4px 0 0;padding-left:18px}
+.checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px 18px}
+.check{display:flex;gap:10px;align-items:flex-start;padding:6px 4px;cursor:pointer}
+.check input{width:20px;height:20px;margin-top:3px;accent-color:var(--teal);flex:none}
+.check b{font-weight:600}
+.check small{display:block;color:var(--sub);font-size:.87rem}
+.group-h{font-family:var(--display);font-size:.95rem;color:var(--sub);margin:16px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.group-h.star{color:var(--teal)}
+.item{display:grid;grid-template-columns:minmax(0,1.1fr) auto minmax(0,1fr);gap:10px 16px;align-items:start;padding:12px 0;border-bottom:1px dashed var(--line)}
+.item:last-child{border-bottom:0}
+.item.star{background:linear-gradient(90deg,var(--teal-soft),transparent 70%);border-radius:10px;padding-left:10px;padding-right:10px}
+.item h4{margin:0;font-size:1rem;font-weight:600}
+.item ul{margin:2px 0 0;padding-left:18px;color:var(--sub);font-size:.9rem}
+.item .rate{display:flex;gap:6px;flex-wrap:wrap}
+.item input[type=text]{background:var(--card)}
+.item.missing .rate{outline:2px dashed var(--warn);outline-offset:4px;border-radius:999px}
+.field.missing input,.field.missing select,.field.missing textarea{border-color:var(--warn);box-shadow:0 0 0 2px var(--warn-soft)}
+.check.missing{background:var(--warn-soft);border-radius:10px}
+.chips.missing{outline:2px dashed var(--warn);outline-offset:4px;border-radius:999px}
+@media (max-width:680px){.item{grid-template-columns:1fr}}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.pane{border-radius:12px;padding:14px}
+.pane.cream{background:var(--cream)} .pane.sky{background:var(--sky)}
+.pane h3{font-size:1rem;margin-bottom:8px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 16px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-family:var(--display);padding:11px 22px;font-size:1.02rem}
+button.ghost{background:transparent}
+button.danger{color:var(--accent);border-color:var(--accent)}
+button:disabled{opacity:.55;cursor:not-allowed}
+.msg{font-size:.95rem}
+.msg.err{color:var(--accent)} .msg.ok{color:var(--teal)}
+.empty{padding:28px;text-align:center;color:var(--sub);background:var(--card);border:1px dashed var(--line);border-radius:14px;margin-top:16px}
+/* admin */
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 16px;min-width:110px}
+.stat b{display:block;font-family:var(--display);font-size:1.5rem;font-weight:500;font-variant-numeric:tabular-nums}
+.stat span{color:var(--sub);font-size:.88rem}
+.stat.ok b{color:var(--teal)} .stat.bad b{color:var(--warn)}
+.filters{display:grid;grid-template-columns:2fr repeat(5,minmax(120px,1fr));gap:10px;margin-top:14px}
+@media (max-width:820px){.filters{grid-template-columns:1fr 1fr}}
+.tablebox{overflow-x:auto;margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:.93rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--display);font-weight:400;color:var(--sub);background:var(--lav);position:sticky;top:0}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--bg)}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;border-radius:999px;padding:1px 10px;font-size:.85rem;white-space:nowrap}
+.pill.ok{background:var(--teal-soft);color:var(--teal)} .pill.bad{background:var(--warn-soft);color:var(--warn)} .pill.n{background:var(--lav);color:var(--sub)}
+/* detail */
+.overlay{position:fixed;inset:0;background:color-mix(in srgb,#000 40%,transparent);z-index:20;display:flex;justify-content:flex-end}
+.drawer{background:var(--bg);width:min(720px,100%);height:100%;overflow-y:auto;padding:20px max(18px,env(safe-area-inset-right,0px)) 40px 18px;padding-top:calc(20px + env(safe-area-inset-top,0px))}
+.drawer h2{font-size:1.3rem}
+.dl{display:grid;grid-template-columns:150px minmax(0,1fr);gap:6px 14px;margin-top:10px}
+.dl dt{color:var(--sub);font-size:.9rem}
+.dl dd{margin:0;overflow-wrap:anywhere}
+.ditem{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.ditem .note{grid-column:1/-1;color:var(--sub);font-size:.92rem}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;z-index:30;font-size:.95rem}
+@media (prefers-reduced-motion:no-preference){.drawer{animation:slide .2s ease-out}@keyframes slide{from{transform:translateX(24px);opacity:.6}}}
+</style>
+</head>
+<body style="margin:0">
+
+<div class="wrap" id="wrap">
+  <header class="top">
+    <div>
+      <h1>New Comer Checklist : Support</h1>
+      <p class="lead">ข้อมูล Buddy 7 วัน และแบบประเมิน OB 7 วัน ที่สาขาส่งเข้ามาทั้งหมด • ค้นหา ดูรายละเอียด และดาวน์โหลด Excel</p>
+    </div>
+  </header>
+  <div class="notice" id="accessNote" hidden></div>
+
+  <!-- ============ FORM ============ -->
+  <main id="viewForm">
+    <form id="obForm" novalidate>
+      <section class="blk">
+        <div class="blk-h"><h2>ข้อมูลพนักงานใหม่</h2></div>
+        <div class="grid2">
+          <label class="field"><span class="req">ชื่อ-นามสกุล</span><input type="text" id="f_name" autocomplete="off"></label>
+          <label class="field"><span class="req">Area</span><select id="f_area"><option value="">เลือก Area</option></select></label>
+          <label class="field"><span class="req">Shop Code / Shop Name</span><select id="f_shop" disabled><option value="">เลือก Area ก่อน</option></select></label>
+          <div class="field"><span>สาขาที่เลือก</span><div class="shopcard" id="shopCard">ยังไม่ได้เลือกสาขา</div></div>
+          <label class="field"><span class="req">วันที่ On Board</span><input type="date" id="f_date"></label>
+          <div class="grid2" style="grid-template-columns:1fr 1fr">
+            <label class="field"><span class="req">Check In</span><input type="time" id="f_in"></label>
+            <label class="field"><span class="req">Check Out</span><input type="time" id="f_out"></label>
+          </div>
+        </div>
+        <div class="field" style="margin-top:12px"><span class="req">Agency</span>
+          <div class="chips" id="agencyChips"></div>
+        </div>
+      </section>
+
+      <section class="blk">
+        <div class="blk-h"><h2 class="req">ถ่ายรูปพนักงาน คู่กับ ผู้จัดการสาขา / ผู้ประเมิน</h2></div>
+        <div class="photo" id="photoBox">
+          <label class="photo-pick" id="photoPick"><input type="file" id="f_photo" accept="image/*" capture="environment"><span id="photoPickTxt">แตะเพื่อถ่ายรูป หรือเลือกรูปจากเครื่อง</span></label>
+          <img id="photoPrev" alt="รูปพนักงานคู่กับผู้จัดการสาขา" hidden>
+          <div class="actions" style="margin-top:0" id="photoAct" hidden><button type="button" id="photoRetake">ถ่ายใหม่</button><span class="msg" id="photoMsg"></span></div>
+        </div>
+      </section>
+
+      <div class="focusrow">
+        <div class="f-do">
+          <h3>เน้นย้ำ</h3>
+          <div><b>การดูแลลูกค้า &amp; การขาย เป็นสำคัญ</b></div>
+          <div class="hint" style="color:inherit">ให้น้องลองทักทาย ดูแล และพูดคุยกับลูกค้าจริง ๆ โดยมีพี่เลี้ยงอยู่ข้าง ๆ</div>
+        </div>
+        <div class="f-no">
+          <h3>ข้อห้าม</h3>
+          <ul>
+            <li><b>ห้ามพนักงานกดคิวให้ลูกค้า</b></li>
+            <li>ห้ามให้ใช้ User / รหัสผ่านของผู้อื่น และใช้ระบบใด ๆ ของสาขา</li>
+            <li>ห้ามให้ทำธุรกรรมกับลูกค้าเองลำพัง</li>
+          </ul>
+        </div>
+      </div>
+
+      <section class="blk">
+        <div class="blk-h"><span class="tag">A</span><h2>สาขาต้อนรับ &amp; แนะนำข้อมูลเบื้องต้น</h2><span class="hint">ต้องติ๊กครบทุกข้อจึงจะส่งได้</span></div>
+        <div class="checks" id="aList"></div>
+        <div class="grid2" style="margin-top:12px">
+          <label class="field"><span class="req">เพื่อนที่ได้รู้จัก (อย่างน้อย 1 คน)</span><input type="text" id="f_friend" autocomplete="off"></label>
+          <label class="field"><span class="req">ชื่อพี่เลี้ยง (Buddy/Mentor)</span><input type="text" id="f_buddy" autocomplete="off"></label>
+        </div>
+      </section>
+
+      <section class="blk">
+        <div class="blk-h"><span class="tag">B</span><h2>พฤติกรรมระหว่างวัน</h2><span class="hint">ประเมินครบทุกหัวข้อ • หัวข้อที่ "ต้องพัฒนา" ต้องเขียนคำแนะนำ</span></div>
+        <div id="bList"></div>
+      </section>
+
+      <section class="blk">
+        <div class="blk-h"><span class="tag">C</span><h2>สรุปผล &amp; คุยกันท้ายวัน</h2></div>
+        <div class="two">
+          <div class="pane cream">
+            <h3 class="req">สรุปผล</h3>
+            <div class="chips">
+              <label class="seg ok"><input type="radio" name="result" value="pass" id="r_pass">ผ่าน</label>
+              <label class="seg bad"><input type="radio" name="result" value="fail" id="r_fail">ไม่ผ่าน</label>
+            </div>
+            <label class="field" style="margin-top:10px"><span id="reasonLbl" class="req">เหตุผล</span><textarea id="f_reason"></textarea></label>
+          </div>
+          <div class="pane sky">
+            <h3>คุยกันท้ายวัน (สาขาถามน้อง)</h3>
+            <label class="field"><span class="req">"วันนี้ได้เรียนรู้อะไรบ้าง?"</span><textarea id="f_learn"></textarea></label>
+            <label class="field" style="margin-top:8px"><span class="req">"มีอะไรสงสัย หรืออยากเตรียมตัวเรื่องใดก่อนเข้าอบรม?"</span><textarea id="f_ask"></textarea></label>
+          </div>
+        </div>
+        <div class="grid2" style="margin-top:14px">
+          <label class="field"><span class="req">ผู้จัดการสาขา / ผู้ประเมิน</span><input type="text" id="f_mgr" autocomplete="off"></label>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button type="submit" class="primary" id="submitBtn">ส่งแบบฟอร์ม</button>
+        <span class="hint">ช่องที่มี * ต้องกรอกให้ครบ</span>
+        <button type="button" class="ghost" id="clearBtn">ล้างฟอร์ม</button>
+        <span class="msg" id="formMsg" role="status"></span>
+      </div>
+      <div id="clearConfirm" class="actions" hidden>
+        <span class="msg">ล้างข้อมูลที่กรอกไว้ทั้งหมด?</span>
+        <button type="button" class="danger" id="clearYes">ล้าง</button>
+        <button type="button" id="clearNo">ยกเลิก</button>
+      </div>
+    </form>
+  </main>
+
+  <!-- ============ BUDDY 7 DAYS ============ -->
+  <main id="viewBuddy" hidden>
+    <section class="blk" hidden><img id="jImg" alt=""><button type="button" id="jOpen"></button><table><tbody id="eoRows"></tbody></table></section>
+    <form id="bdForm" novalidate></form>
+  </main>
+
+  <!-- ============ MINE ============ -->
+  <main id="viewMine" hidden>
+    <section class="blk"><div class="blk-h"><h2>รายการที่ส่งจากเครื่องนี้</h2><span class="hint">เก็บไว้ในเบราว์เซอร์ของเครื่องนี้เท่านั้น</span></div>
+      <div id="mineList"></div>
+    </section>
+  </main>
+
+  <!-- ============ ADMIN ============ -->
+  <main id="viewAdmin" hidden>
+   <section class="blk" id="loginBox" style="max-width:440px;margin-inline:auto">
+    <div class="blk-h"><h2>เข้าสู่หน้า Support</h2></div>
+    <form id="loginForm" class="field" style="gap:10px">
+      <label class="field"><span>รหัส Support</span><input type="password" id="adminKey" autocomplete="current-password"></label>
+      <div class="actions" style="margin-top:0"><button type="submit" class="primary" id="loginBtn">เข้าสู่ระบบ</button><span class="msg" id="loginMsg" role="status"></span></div>
+    </form>
+   </section>
+   <div id="adminBody" hidden>
+    <div class="actions" style="justify-content:flex-end;margin-top:12px"><button type="button" class="ghost" id="logoutBtn">ออกจากระบบ</button></div>
+    <div class="kinds" id="kindSwitch" role="group" aria-label="ประเภทแบบฟอร์ม">
+      <button type="button" data-kind="buddy" aria-pressed="true">Buddy 7 วัน</button>
+      <button type="button" data-kind="progress" aria-pressed="false">Buddy กำลังประเมิน</button>
+      <button type="button" data-kind="ob" aria-pressed="false">แบบประเมิน OB 7 วัน</button>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="filters">
+      <input type="search" id="q" placeholder="ค้นหา ชื่อ / Shop / Code / พี่เลี้ยง / ผู้ประเมิน">
+      <select id="fArea"><option value="">ทุก Area</option></select>
+      <select id="fAgency"><option value="">ทุก Agency</option></select>
+      <select id="fResult"><option value="">ทุกผล</option><option value="pass">ผ่าน</option><option value="fail">ไม่ผ่าน</option></select>
+      <label class="field"><span id="fFromLbl">ตั้งแต่วันที่ OB</span><input type="date" id="fFrom"></label>
+      <label class="field"><span id="fToLbl">ถึงวันที่ OB</span><input type="date" id="fTo"></label>
+    </div>
+    <div class="actions">
+      <button type="button" class="primary" id="exportBtn">ดาวน์โหลด Excel (CSV)</button>
+      <button type="button" id="copyBtn">คัดลอกข้อมูล</button>
+      <button type="button" class="ghost" id="refreshBtn">โหลดใหม่</button>
+      <span class="msg" id="adminMsg" role="status"></span>
+    </div>
+    <div class="tablebox"><table>
+      <thead id="adminHead"></thead>
+      <tbody id="adminRows"></tbody>
+    </table></div>
+    <div id="adminEmpty" class="empty" hidden></div>
+   </div>
+  </main>
+</div>
+<div id="overlay" class="overlay" hidden></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(function(){
+const SHOPS={"rrh":{"BMA I - North West":"BMA","BMA II - South West":"BMA","BMA III - North East":"BMA","BMA IV - South East":"BMA","BMA V - Central":"BMA","UPC - Central":"UPC II","UPC - Central Northeast":"UPC I","UPC - Lower Northeast":"UPC I","UPC - East":"UPC II","UPC - Lower North":"UPC I","UPC - Lower South":"UPC II","UPC - Upper North":"UPC I","UPC - Upper Northeast":"UPC I","UPC - Upper South":"UPC II","UPC - West":"UPC II"},"areas":{"BMA I - North West":[["80101185","True Shop Central West Gate"],["80100480","True Shop The Mall Ngamwongwan 3Fl."],["80101182","True Shop Central Chaengwattana"],["80101305","True Shop Robinson Srisaman"],["80101713","True Shop Central North Ville"],["80101271","True Shop Big C Chaengwattana"],["80101217","True Shop Big C Sukhapibal 5"],["80101218","True Shop Big C Sainoi Nonthaburi"],["80100807","True Shop Lotus's Nakhon In"],["80100477","True Shop Central Ladprao"],["80101180","True Shop Wongsawang Town Center"],["80101264","True Shop Central Plaza Ramindra 1FL."],["80101223","True Shop Gateway Bangsue"],["80101584","True Shop Robinson Ratchaphruek"],["80101623","True Shop The Government Complex"],["80101627","True Shop Central Westville"],["10055254","True Shop Lotus's Ladprao"],["10055275","True Shop Lotus's Tiwanon - Prakret Nonthaburi"],["80101689","True Shop Big C Sukhaphiban 5 (D)"],["80101698","True Shop Central West Gate (D)"],["80101702","True Shop Central Plaza Chaengwattana (D)"],["80101715","Ten Ten Shop Phaholyothin Soi 69/1"]],"BMA II - South West":[["80100566","True Shop Central Rama 2 (H)"],["80100565","True Shop Central Rama 2"],["80100483","True Shop The Mall Thapra"],["80100626","True Shop Central Pinklao 3Fl."],["80100484","True Shop The Mall Bangkae 2Fl."],["80100928","True Shop Seacon Bangkae"],["80100736","True Shop Lotus's Bangpakok"],["10055262","True Shop Lotus's Bangkae"],["10055258","True Shop Lotus's Charan 70"],["80101679","True Shop Seacon Bangkae (D)"]],"BMA III - North East":[["80101340","True Shop Future Park Rangsit"],["80101341","True Shop Future Park Rangsit (H)"],["80100925","True Shop Fashion Island"],["80101123","True Shop Lotus's Sukhapibal 3"],["80101350","True Shop iPlace Latkrabang"],["10055253","True Shop Lotus's Ban Fah"],["10055273","True Shop Lotus's Liab Klong 2"],["10055289","True Shop Lotus's Sukhapiban 1"],["10055284","True Shop Lotus's Bangkadi"],["80101706","True Shop Fashion Island (D)"],["80101707","True Shop Future Park Rangsit (2 nd.) (D)"],["80101708","True Shop Future Park Rangsit (G Fl.) (D)"]],"BMA IV - South East":[["80100481","True Shop The Mall Bangkapi"],["80101071","True Shop Seacon Square 2"],["80101066","True Shop Central Bangna"],["80101296","True Shop Paradise Park Srinakarin"],["80101070","True Shop Mega Bangna"],["80100805","True Shop Lotus's Phatthanakan"],["80101418","True Shop Imperial Samrong"],["80101632","True Shop Lotus's Bangna Trad"],["10055285","True Shop Lotus's Sriwaree"],["10055257","True Shop Lotus's Onnut 80"],["10055255","True Shop Lotus's Bang Plee"],["80101709","True Shop Mega Bangna (D)"]],"BMA V - Central":[["80101633","True Shop Makro Sri Ayutthaya"],["80101349","True Shop Silom Complex"],["80101347","True Shop U Chu Liang Building"],["80101068","True Shop Central Rama 3"],["80100836","True Shop Central World 4Fl."],["80101363","True Shop at Chamchuri Square 1"],["80101221","True Shop Emquartier"],["80101269","True Shop Mahboon Krong 4Fl."],["80100478","True Shop Terminal 21"],["80100729","True Shop Station Lotus's Rama 4"],["80101186","True Shop Central Festival East Ville"],["80100715","True Shop Fortune Town 1Fl."],["80100623","True Shop Central Rama 9"],["80100622","True Shop Central Rama 9 4Fl."],["80101630","True kiosk Lotus's Ramintra"],["80101667","True Shop Supreme Complex (D)"]],"UPC - Central":[["80101626","Kiosk Lotus's Sena Ayutthaya"],["80100856","True Shop Uthaithani"],["80101307","True Shop Robinson Lopburi"],["80100763","True Shop The Walk Nakornsawan"],["80101628","True Shop Central Nakhonsawan"],["80100926","True Shop Ayudhaya Park"],["80101329","True Shop Big C Nongbua Nakhonsawan"],["80100796","True Shop Lotus's Khok Samrong Lopburi"],["80100725","True Shop Lotus's Bang Pa-In Ayudhaya"],["80101358","True Shop Central Ayutthaya"],["80101351","True Shop Lotus's Kaengkhoi"],["80101691","True Shop Ayutthaya (D)"]],"UPC - Central Northeast":[["80101266","True Shop Central Ubonratchathani"],["80100778","True Shop Lotus's Yasothon"],["80101227","True Shop Lotus's Ubonratchathani"],["80100771","True Shop Lotus's Chiangyuen Mahasarakham"],["80101303","True Shop Robinson Roi-Et"],["80101309","True Shop Robinson Mukdaharn"],["80100783","True Shop Lotus's Phonthong Roi Ed"],["80100847","True Shop Mini Senangkhanikkom Amnatcharoen"],["80100852","True Shop Khamcha-I Mukdahan"],["80100861","True Shop Kasetwisai Roiet"],["80100802","True Shop Lotus's Borabue Mahasarakham"],["80100790","True Shop Lotus's Pibun Mangsaharn Ubonratchathani"],["80100797","True Shop Lotus's Trakan Phuet Phon Ubonratchathani"],["80100832","True Shop Lotus's Det Udom Ubonratchathani"],["80100864","True Shop Buntharik Ubonratchathani"],["10055248","True Shop Lotus's Kosumphisai"],["10055265","True Shop Lotus's Khukhan"],["10055279","True Shop Lotus's Srisaket"],["10055282","True Shop Lotus's Warinchmprap"],["80101663","True Shop Lotus's Muang Sam Sib (D)"],["80101676","True Shop Big C Phibun Mangsahan (D)"],["80101677","True Shop Lotus's Ubon Ratchathani (D)"],["80101680","True Shop Lotus's Talad Khunhan (D)"],["80101681","True Shop Lotus's Trakan Phuet Phon (D)"],["80101684","True Shop Lotus's Kantharalak (D)"],["80101685","True Shop Lotus's Det Udom (D)"],["80101712","True Shop Central Plaza Ubon Ratchathani (D)"]],"UPC - Lower Northeast":[["80100487","True Shop The Mall Nakhonratchasima 3Fl."],["80100776","True Shop Lotus's Jor Hor Nakhonratchasima"],["80100872","True Shop Chatturat Chaiyaphum"],["80100765","True Shop Lotus's Prasat Surin"],["80100764","True Shop Lotus's Sungkha Surin"],["80100774","True Shop Lotus's Phimai Nakhonratchasima"],["80101225","True Shop Kao Yai Market Village"],["80101345","True Shop Down Town Nakhonratchasima"],["80100842","True Shop Terminal 21 Korat"],["80100772","True Shop Lotus's Kangkho Chaiyaphum"],["80101304","True Shop Robinson Buriram"],["80101290","True Shop Big C Korat 2"],["80101119","True Shop Central Plaza Nakhon Ratchasima"],["80100769","True Shop Lotus's Thatum Surin"],["80100781","True Shop Lotus's Lamplaimat Buriram"],["80101313","True Shop Robinson Chaiyaphum"],["80100780","True Shop Lotus's Prakonchai Buriram"],["80100845","True Shop Kaset Sombun Chaiyaphum"],["80101377","True Shop Big C Chaiyaphum"],["80101265","True Shop Chumphuang Nakhonratchasima"],["80100851","True shop Nongbunmak Nakhonratchasima"],["80100860","True Shop Sikhoraphum Surin"],["80101331","True Shop Big C Nongki Buriram"],["80100793","True Shop Lotus's Satuek Burirum"],["80100794","True Shop Lotus's Nonthai Nakhonratchasima"],["80100862","True Shop Pak Thong Chai Nakhonratchasima"],["80100863","True Shop Huai Thalaeng Nakhonratchasima"],["80100867","True Shop Dankhuntod Nakhonratchasima"],["80100869","True Shop Khon Buri Nakhonratchasima"],["80100870","True Shop Soeng Sang Nakhonratchasima"],["10055278","True Shop Lotus's Korat"],["10055281","True Shop Lotus's Surin"],["10055290","True Shop Lotus's Sikhio"],["80101650","True Shop Lotus's Pakthongchai (D)"],["80101653","True Shop Robinson Chaiyaphum (D)"],["80101654","True Shop Lotus's Bua Yai (D)"],["80101660","True Shop Lotus's Phimai Nakhon (D)"],["80101666","True Shop Lotus's Sangkha (D)"],["80101672","True Shop Big C Korat 2 (D)"],["80101673","True Shop Lotus's Prasat (D)"],["80101711","True Shop The Mall Korat (D)"]],"UPC - East":[["80101184","True Shop Chonburi"],["80100837","True Shop Central Chonburi"],["80101378","True Shop South Pattaya"],["80100615","True Shop Central Festival Pattaya Beach"],["80100479","True Shop Terminal 21 Pattaya"],["80100859","True Shop Trad"],["80100625","True Shop Central Plaza Rayong"],["80101189","True shop Central Plaza Si Racha"],["80101391","True Shop Central Chantaburi"],["10055249","True Shop Lotus's Wang NamYen"],["10055256","True Shop Lotus's Sri Mahaphoe"],["10055260","True Shop Lotus's Prachinburi"],["10055287","True Shop Lotus's Chonburi"],["80101695","True Shop Central Rayong (D)"],["80101700","True Shop Central Festival Pattaya (D)"]],"UPC - Lower North":[["80101306","True Shop Robinson Mae Sot"],["80101308","True Shop Robinson Khamphaengphet"],["80100854","True Shop Mini Lomsak Phetchabun"],["80100865","True Shop Taphan Hin Phichit"],["80101198","True Shop Central Phitsanulok"],["80100782","True Shop Lotus's Thaluang Phichit"],["10055259","True Shop Lotus's Kanuworaluk"],["10055264","True Shop Lotus's Maesod Tak"],["10055271","True Shop Lotus's Tak"],["10055277","True Shop Lotus's Bueng Samphan Phetchabun"],["80101656","True Shop Lotus's Pitsanulok (D)"],["80101658","True Shop Lotus's Lomsak (D)"],["80101659","True Shop Robinson Mae Sot (D)"],["80101665","True Shop Salokbat Kamphaengphet (D)"],["80101704","True Shop Central Plaza Phitsanulok (D)"]],"UPC - Lower South":[["80101222","True Shop Central Festival Hadyai Songkhla"],["80100839","True Shop Central Plaza Nakhonsithammarat"],["80100853","True Shop Mini Mueang Satun"],["10055291","True Shop Lotus's Satun"],["10055280","True Shop Lotus's Mae Khri"],["80101687","True Shop Ampur Ranot Songkhla (D)"],["80101692","True Shop Central Nakorn Sithammarat (D)"],["80101699","True Shop Central Festival Hat Yai (D)"]],"UPC - Upper North":[["80100750","True Shop Lotus's Fang Chiangmai"],["80100754","True Shop Lotus's Ruamchok Chiangmai"],["80101067","True Shop Central Airport Plaza Chiangmai"],["80101281","True Shop Big C Chiangmai"],["80100486","True Shop Central Festival Chiangmai"],["80100621","True Shop Central Chiangrai"],["80101117","True Shop Central Lampang"],["80101263","True Shop Maya Chiangmai"],["80100849","True Shop Mini Mueang Phayao"],["80101013","True Shop Mini Mueang Maehongson"],["80100858","True Shop Mini Mae Sai Chiangrai"],["80100792","True Shop Lotus's Payao"],["80100798","True Shop Lotus's Chiangkam Phayao"],["80100804","True Shop Lotus's Jomthong Chiangmai"],["10055263","True Shop Lotus's Nan"],["10055268","True Shop Lotus's Hangdong"],["10055269","True Shop Lotus's Chiang Khong"],["80101655","True Shop Lotus's Fang (D)"],["80101661","True Shop Lotus's Chom Thong (D)"],["80101670","True Shop Lotus's Ruam Choke (D)"]],"UPC - Upper Northeast":[["80100756","True Shop Lotus's Nongbualamphu"],["80100749","True Shop Lotus's Kalasin"],["80101289","True Shop Big C Banphai Khon Kaen"],["80100727","True Shop Lotus's Udonthani"],["80100760","True Shop Lotus's Nakhonphanom"],["80100770","True Shop Lotus's Buengkan"],["80101348","True Shop Asawann Shopping Complex Nongkhai"],["80101183","True Shop Central Khonkaen"],["80101196","True Shop Central Plaza Udonthani"],["80101292","True Shop Big C Bandung Udonthani"],["80101327","True Shop Big C Phangkhon Sakonnakhon"],["80101648","True Shop UD Town Udonthani"],["80101328","True Shop Big C Khamtakla Sakonnakhon"],["80100786","True Shop Lotus's Somdet Kalasin"],["80100873","True Shop Mueang Loei"],["80100799","True Shop Lotus's Phon Khonkaen"],["80100801","True Shop Lotus's Banphue Udonthani"],["80101346","True Shop Asawann Phonphisai Nong Khai"],["80100803","True Shop Lotus's Nongruea Khonkaen"],["80101294","True Shop Big C Loei"],["80100848","True Shop Wangsaphung Loei"],["80101293","True Shop Big C Khon Kaen2"],["10055261","True Shop Lotus's Thabor Nong Khai"],["10055272","True Shop Lotus's Udonthani-Nadee"],["10055274","True Shop Lotus's Loei"],["10055283","True Shop Lotus's Sakhon Nakorn"],["10055286","True Shop Lotus's That Panom"],["80101651","True Shop Lotus's Banphue (D)"],["80101652","True Shop Big C Kranuan (D)"],["80101657","True Shop Assawan Phonpisai (D)"],["80101664","True Shop Big C Loei (D)"],["80101668","True Shop Lotus's Nong Ruea (D)"],["80101671","True Shop Lotus's Sawandandin (D)"],["80101674","True Shop Lotus's Nakhon Phanom (D)"],["80101678","True Shop Big C Market Puwieng (D)"],["80101683","True Shop Big C Nong Khai (D)"],["80101690","True Shop Big Chiang Nongkhai (D)"],["80101697","True Shop Central Udon Thani (D)"],["80101703","True Shop Central Plaza Khon Kaen (D)"]],"UPC - Upper South":[["80101647","True Shop Central Krabi"],["80100476","True Shop Central Festival Phuket"],["80101115","True Shop Central Suratthani"],["80100838","True Shop Central Festival Samui Suratthani"],["80101122","True Shop Ocean Complex Chumphon"],["80100822","True Shop Lotus's Ranong"],["10055266","True Shop Lotus's Samui"],["10055267","True Shop Lotus's Samui - Lamai"],["10055270","True Shop Lotus's Chalong Phuket"],["80101662","True Shop Ocean Shopping Mall (D)"],["80101675","True Shop Big C Ranong (D)"],["80101688","True Shop Lotus's Chaiya (D)"],["80101701","True Shop Central Festival Samui (D)"],["80101705","True Shop Central Plaza Suratthani (D)"],["80101710","True Shop Phuket (D)"]],"UPC - West":[["80100721","True Shop Lotus's Nakhonpathom"],["80100627","True Shop Hua Hin"],["80100733","True Shop Lotus's Samphran"],["80100821","True Shop Station Lotus's Pranburi Prachuapkhirikhan"],["80101214","True Shop Central Plaza Salaya"],["80101629","True Shop Central Nakhonpathom"],["80100840","True Shop Central Plaza Mahachai"],["80101312","True Shop Robinson Kanchanaburi"],["80100784","True Shop Lotus's U-Thong Suphanburi"],["80100806","True Shop Lotus's Samchuk Suphanburi"],["10055252","True Shop Lotus's Tha Yang"],["10055251","True Shop Lotus's Supanburi"],["10055250","True Shop Lotus's Banglen"],["10055276","True Shop Lotus's Nakornchaisri"],["10055288","True Shop Lotus's Samut Sakhon"],["80101669","True Shop Lotus's Sam Chuk (D)"],["80101682","True Shop Lotus's Pran Buri (D)"],["80101686","True Shop Lotus's Amphur U-Thong (D)"],["80101693","True Shop Central Plaza Mahachai (D)"],["80101696","True Shop Central Salaya (D)"],["80101714","Ten Ten Shop Ban Tangsin Salaya"]]}};
+const BUDDY={"days":{"1":{"goal":"พร้อมเริ่มงานใน Shop","outcome":"รู้จักทีมและพื้นที่ เข้าใจกฎ Fraud/Code of Conduct/PDPA ตารางงาน Grooming การลงเวลา และใช้อุปกรณ์พื้นฐานได้ตามคำแนะนำ","verify":"อธิบายกฎสำคัญและขั้นตอนเริ่มงานกลับได้ พร้อมปฏิบัติตามมาตรฐานโดยไม่แชร์ User"},"2":{"goal":"พร้อมใช้แหล่งข้อมูลและระบบพื้นฐาน","outcome":"เข้าใช้งานระบบด้วย User ของตนเอง ค้นหาข่าว/สื่อเรียนรู้/โปรโมชัน และบอกภาพรวมสินค้า–บริการหลักของ True ได้","verify":""},"3":{"goal":"เริ่มสื่อสารและนำเสนอ Mobile/Digital","outcome":"ใช้ Greeting/Ending Script ตั้งคำถามค้นหาความต้องการ และแนะนำ Mobile หรือ Digital Service เบื้องต้นได้","verify":""},"4":{"goal":"เข้าใจกระบวนการขายและงานเงินสด","outcome":"อธิบายและฝึกการบริการตาม GREAT Model พร้อมเข้าใจขอบเขตการเบิกเงิน ทอน และสินค้าโดยไม่ทำธุรกรรมเสี่ยงลำพัง","verify":""},"5":{"goal":"แนะนำ Non-Mobile/IoT อย่างรับผิดชอบ","outcome":"แนะนำสินค้า Non-Mobile/IoT เบื้องต้น และตรวจสอบ Device Policy/Warranty ก่อนให้ข้อมูลลูกค้าได้","verify":""},"6":{"goal":"ฝึกดูแลลูกค้าจริงอย่างปลอดภัย","outcome":"สนทนากับลูกค้าภายใต้การดูแล วิเคราะห์ปัญหาเบื้องต้น และรักษาความลับ/จัดการข้อมูลหรือเอกสารลูกค้าตามข้อกำหนด","verify":""},"7":{"goal":"พร้อมส่งต่อเคสและเข้าสู่ Training","outcome":"รับฟัง Complaint ด้วย Empathy เลือกช่องทาง Escalation/Support ที่เหมาะสม และสรุปจุดที่ต้องพัฒนาต่อได้","verify":""}},"items":[{"id":"d1_1","day":1,"cat":"1. Orientation & Policy","topic":"รู้จักโครงสร้าง Shop (ผู้บริหาร Retail Shop) และบทบาทหน้าที่ของพนักงาน","act":"แนะนำโครงสร้างร้าน ทีมงาน และผู้ประสานงานหลัก","remark":""},{"id":"d1_2","day":1,"cat":"1. Orientation & Policy","topic":"เข้าใจกฎระเบียบและมาตรฐานการทำงาน ห้ามแชร์ User ในการทำงานร่วมกัน (Fraud/Code of conduct/PDPA)","act":"อธิบายกฎ Fraud / Code of Conduct / PDPA และย้ำห้ามแชร์ User","remark":""},{"id":"d1_3","day":1,"cat":"1. Orientation & Policy","topic":"เข้าใจเรื่องของ Service Standard and Grooming","act":"สาธิต Service Standard และตรวจ Grooming ก่อนเริ่มงาน","remark":""},{"id":"d1_4","day":1,"cat":"2. Shop Operation","topic":"วันเปิดปิดร้าน ตารางงาน วันหยุด และ OT","act":"อธิบายเวลาทำการของร้าน ตารางงาน วันหยุด\n(กรณีลาต่าง ๆ แจ้งพนักงานใหม่ให้แจ้งกับผู้จัดการร้านเสมอ)","remark":""},{"id":"d1_5","day":1,"cat":"2. Shop Operation","topic":"การยิงบัตรเข้างานออกงาน และการคีย์ข้อมูลลงระบบ Success Factor / ระบบ HR ที่เกี่ยวข้อง","act":"ทบทวนเวลาเปิด–ปิดร้าน ตารางงาน วันหยุด และขั้นตอนการยิงบัตรเข้า-ออกงาน","remark":""},{"id":"d1_6","day":1,"cat":"2. Shop Operation","topic":"การบริหารจัดการลูกค้าภายในร้าน รวมถึงการใช้งานอุปกรณ์พื้นฐานภายในสาขา เช่น โน้ตบุ๊ค แท็บเลต อุปกรณ์อ่านบัตร เป็นต้น","act":"พาเดิน Shop และสาธิตอุปกรณ์พื้นฐานภายในสาขา","remark":""},{"id":"d2_1","day":2,"cat":"2. Shop Operation","topic":"User การเข้าใช้งานระบบในการขายและบริการ ต้องเข้าใช้งานได้ หากไม่เข้าภายใน 30 วันจะถูก Expire","act":"ตรวจว่ามี User และทดลอง Login โดยเจ้าของ User เอง","remark":"ติดตามสอบถามเรื่อง User ได้ที่ Manager"},{"id":"d2_2","day":2,"cat":"2. Shop Operation","topic":"User One Click รวมถึง True KMS / iClear Plus ต้องเข้าใช้งานได้ และเข้าไปอ่านประกาศข่าวศึกษาข้อมูล Training Material เป็นประจำ รวมถึงการ เพิ่มเพื่อน Line OA Channel Communication","act":"ทดลองเข้า One Click / True KMS / iClear Plus และชี้แหล่งข่าว–สื่อเรียนรู้","remark":"ติดตามสอบถามเรื่อง User ได้ที่ Manager"},{"id":"d2_3","day":2,"cat":"3. Sales","topic":"พนักงานรู้จักสินค้าของทรูทั้งหมด เช่น TMH, TOL, TVS, DEVICE, Financing, TrueProtech เป็นต้น","act":"แนะนำกลุ่มสินค้าและบริการหลัก พร้อมตัวอย่างคำถามค้นหาความต้องการ","remark":""},{"id":"d2_4","day":2,"cat":"Week 1 / Module 1","topic":"ข้อมูลสินค้า โปรโมชัน Blacklist และระบบการขาย","act":"สอนวิธีตรวจสอบข้อมูลสินค้า โปรโมชัน Blacklist และระบบขายที่ใช้จริงในสาขา","remark":"ห้ามใช้หรือแชร์ User ของผู้อื่น"},{"id":"d2_5","day":2,"cat":"8. System & Access","topic":"เข้าใจระบบที่ใช้งานภายใน Shop และการกดเข้าไปอ่านข้อมูล และกดรับทราบบน Line OA Channel Communication","act":"แนะนำภาพรวมระบบที่ใช้จริงใน Shop และช่องทางขอความช่วยเหลือ","remark":""},{"id":"d3_1","day":3,"cat":"9. Customer Experience","topic":"Greeting / Ending Script","act":"สาธิตและ Role Play Greeting / Ending Script","remark":""},{"id":"d3_2","day":3,"cat":"5. Digital / True App","topic":"พนักงานดาวน์โหลด True App ที่เครื่องตัวเองและสามารถแนะนำ Digital Service / True App / True Money / True ID / True Visions Now","act":"ติดตั้ง/เปิดใช้ True App และทดลองแนะนำ Digital Service เบื้องต้น","remark":""},{"id":"d3_3","day":3,"cat":"Week 1 / Module 1","topic":"Sales & Service Impression & Mobile","act":"สาธิตขั้นตอนการขาย Mobile และบริการตั้งแต่ค้นหาความต้องการจนจบการนำเสนอ","remark":"Buddy สาธิตก่อน แล้วให้น้อง Role Play"},{"id":"d3_4","day":3,"cat":"Week 1 / Module 1","topic":"ฝึกค้นหาความต้องการและแนะนำสินค้า/บริการ","act":"ให้น้องฝึกทักทาย ตั้งคำถามค้นหาความต้องการ และแนะนำทางเลือก โดย Buddy ช่วยประเมิน","remark":"ยังไม่ให้ทำรายการขายเอง"},{"id":"d4_1","day":4,"cat":"3. Sales","topic":"น้องสามารถให้บริการขายแบบ GREAT Model ได้","act":"ให้สังเกตการขายตาม GREAT Model และทำ Role Play","remark":""},{"id":"d4_2","day":4,"cat":"2. Shop Operation","topic":"การเบิกเงินและทอน และสินค้าภายในร้าน","act":"ให้สังเกตการจัดคิวและดูแลลูกค้า แล้วลองทำภายใต้การกำกับ","remark":""},{"id":"d5_1","day":5,"cat":"Week 2 / Module 2","topic":"Device Policy & Warranty","act":"แนะนำ Device Policy เงื่อนไข Warranty และวิธีตรวจสอบข้อมูลที่ถูกต้องก่อนให้คำแนะนำ","remark":"กรณีเคสไม่ชัดเจนให้ส่งต่อ Manager"},{"id":"d5_2","day":5,"cat":"Week 2 / Module 2","topic":"Sales Non-Mobile / IoT","act":"อธิบายและสาธิตการขายสินค้า Non-Mobile และ IoT พร้อมให้น้องทดลองแนะนำสินค้า","remark":"ปรับใช้เป็น Preview ก่อนเข้าอบรม"},{"id":"d6_1","day":6,"cat":"10. Compliance & Security","topic":"การจัดการข้อมูลลูกค้า เอกสารต่างๆที่ต้องจัดเก็บ การทำลายเอกสารต่างๆภายในร้าน","act":"อธิบายการดูแลข้อมูลลูกค้า การจัดเก็บ และการทำลายเอกสาร โดยไม่ให้ทำเองลำพัง","remark":""},{"id":"d6_2","day":6,"cat":"Week 2 / Module 2","topic":"Customer Practice & Basic Troubleshooting","act":"ให้น้องลองคุยกับลูกค้าจริงภายใต้การดูแล ฝึกค้นหาสาเหตุและเสนอแนวทางแก้ไขเบื้องต้น","remark":"Buddy ดูแลใกล้ชิด / ห้ามทำธุรกรรมเสี่ยงเอง"},{"id":"d7_1","day":7,"cat":"9. Customer Experience","topic":"Escalation ต่างๆ การเปิด Incident บน True IT / แบบฟอร์มขออนุมัติบน True Connect / Contact หน่วยงานต่างๆ / True IT / Support ต่างๆ","act":"แนะนำช่องทาง Escalation, True IT, True Connect และ Contact Support","remark":""},{"id":"d7_2","day":7,"cat":"9. Customer Experience","topic":"การรับมือ Complaint Empathy","act":"ทำ Role Play การรับ Complaint โดยเน้น Empathy และการส่งต่อ","remark":""}]};
+const AGENCIES=["DY","Skill","PNN","JAG","MTG"];
+const A_ITEMS=[
+ ["a1","ต้อนรับ & พาเยี่ยมชมสาขา","จุดบริการ / โซนสินค้า / มุมโปรโมชัน"],
+ ["a2","แนะนำทีมงานในสาขา","ผู้จัดการ รองผู้จัดการ เพื่อนร่วมทีม"],
+ ["a3","ปฐมนิเทศ","วิสัยทัศน์ วัฒนธรรมองค์กร ค่านิยมบริษัท"],
+ ["a4","แนะนำพื้นที่","ที่เก็บสิ่งของ ห้องน้ำ ที่ทานอาหารกลางวัน"],
+ ["a5","มอบหมายพี่เลี้ยง (Buddy/Mentor)",""],
+ ["a6","มาตรฐานการแต่งกาย & การบริการ","Grooming"],
+ ["a7","ภาพรวมสินค้า–บริการหลักในร้าน","เพื่อใช้พูดคุยกับลูกค้าเบื้องต้น"],
+ ["a8","ข้อควรรู้สำคัญ","รักษาข้อมูลลูกค้า (PDPA) / ไม่แชร์ User"],
+];
+const B_GROUPS=[
+ ["A. บุคลิกภาพ & ทัศนคติ",false,[
+  ["b1","1. บุคลิกภาพ การแต่งกาย",["แต่งกายตามระเบียบ สะอาด เรียบร้อย","ท่าทางสุภาพ มาตรงเวลา"]],
+  ["b2","2. Service Mind ยิ้มแย้ม",["ยิ้มแย้ม เป็นมิตรกับลูกค้าและทีม","อาสาช่วยเหลือโดยไม่ต้องรอสั่ง"]],
+  ["b3","3. สนใจ & กระตือรือร้น",["ซักถาม จดบันทึก สังเกตงานอย่างตั้งใจ","ไม่เล่นมือถือส่วนตัว อาสาลองทำ"]]]],
+ ["B. ★ เน้น การดูแลลูกค้า & เน้นนำเสนอการขาย",true,[
+  ["b4","4. ทักทายลูกค้าทันที",["ยิ้ม สบตา ทักทายภายใน 3–5 วินาที","ไม่ปล่อยให้ลูกค้ายืนรอเอง"]],
+  ["b5","5. ทักษะการดูแลลูกค้า",["ถามว่าให้ช่วยอะไร ดูแลระหว่างรอ","ดูแลจนจบ กล่าวขอบคุณและส่งลูกค้า"]],
+  ["b6","6. นำเสนอขายมือถือ / อุปกรณ์เสริมต่าง ๆ / SIM",["พี่เลี้ยงสอนการเสนอขายมือถือ/อุปกรณ์เสริม/SIM ให้ดูเป็นตัวอย่าง","ถามความต้องการลูกค้า 1–2 คำถาม","แนะนำสินค้า/โปรโมชันได้ 1 รายการ"]]]],
+ ["C. การสื่อสาร & การแก้ปัญหา",false,[
+  ["b7","7. การสื่อสาร",["พูดสุภาพ ชัดเจน มีหางเสียง ครับ/ค่ะ","ตั้งใจฟัง ไม่พูดแทรก"]],
+  ["b8","8. การตอบคำถาม",["ตอบตรงประเด็น ไม่ทราบให้ถาม ไม่เดา","สรุปได้ว่าวันนี้ได้เรียนรู้อะไร"]],
+  ["b9","9. แก้ไขปัญหาเฉพาะหน้า",["ตั้งสติ รับฟัง แสดง Empathy","ขอความช่วยเหลือได้ถูกคน"]]]],
+];
+const B_ALL=B_GROUPS.flatMap(g=>g[2]);
+const RATE={pass:"ผ่าน",improve:"ต้องพัฒนา"};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const DRAFT="ob-draft-v1";
+
+/* ---------- build form ---------- */
+const RRH_ORDER=["BMA","UPC I","UPC II"];
+const AREA_LIST=Object.keys(SHOPS.areas).sort((a,b)=>{const ra=RRH_ORDER.indexOf(SHOPS.rrh[a]),rb=RRH_ORDER.indexOf(SHOPS.rrh[b]);return (ra<0?9:ra)-(rb<0?9:rb)||a.localeCompare(b)});
+(function(){const byR={};AREA_LIST.forEach(a=>{const r=SHOPS.rrh[a]||"";(byR[r]=byR[r]||[]).push(a)});
+ $("#f_area").insertAdjacentHTML("beforeend",Object.keys(byR).map(r=>`<optgroup label="${esc(r)}">${byR[r].map(a=>`<option value="${esc(a)}">${esc(a)}</option>`).join("")}</optgroup>`).join(""));
+ $("#fArea").insertAdjacentHTML("beforeend",AREA_LIST.map(a=>`<option value="${esc(a)}">${esc(a)}</option>`).join(""));})();
+function fillShops(area,code){
+  const sel=$("#f_shop"),list=SHOPS.areas[area]||[];
+  sel.innerHTML=area?`<option value="">เลือกสาขา (${list.length} สาขา)</option>`+list.map(([c,n])=>`<option value="${esc(c)}">${esc(c)} – ${esc(n)}</option>`).join(""):'<option value="">เลือก Area ก่อน</option>';
+  sel.disabled=!area; sel.value=code&&list.some(x=>x[0]===code)?code:""; showShop();
+}
+function shopOf(code){for(const a in SHOPS.areas){const h=SHOPS.areas[a].find(x=>x[0]===code);if(h)return {area:a,code:h[0],name:h[1]}}return null}
+function showShop(){const s=shopOf($("#f_shop").value);$("#shopCard").innerHTML=s?`<b>${esc(s.code)}</b> · ${esc(s.name)}`:"ยังไม่ได้เลือกสาขา"}
+$("#f_area").addEventListener("change",()=>fillShops($("#f_area").value,""));
+$("#f_shop").addEventListener("change",showShop);
+$("#agencyChips").innerHTML=AGENCIES.map(a=>`<label class="seg"><input type="radio" name="agency" value="${a}" id="ag_${a}">${a}</label>`).join("");
+$("#aList").innerHTML=A_ITEMS.map(([k,t,d])=>`<label class="check"><input type="checkbox" id="${k}"><span><b>${t}</b>${d?`<small>${d}</small>`:""}</span></label>`).join("");
+let bh="";
+B_GROUPS.forEach(([title,star,items])=>{
+  bh+=`<div class="group-h${star?" star":""}">${title}</div>`;
+  items.forEach(([k,t,bul])=>{bh+=itemHTML(k,`<h4>${t}</h4><ul>${bul.map(b=>`<li>${b}</li>`).join("")}</ul>`,star)});
+});
+$("#bList").innerHTML=bh;
+function itemHTML(k,left,star){
+  return `<div class="item${star?" star":""}" id="row_${k}"><div>${left}</div>
+  <div class="rate"><label class="seg ok"><input type="radio" name="${k}" value="pass" id="${k}_pass">ผ่าน</label><label class="seg bad"><input type="radio" name="${k}" value="improve" id="${k}_improve">ต้องพัฒนา</label></div>
+  <label class="field"><span class="hint" id="${k}_lbl">คำแนะนำ</span><input type="text" id="${k}_note" autocomplete="off"></label></div>`;
+}
+
+/* ---------- photo ---------- */
+let photoData="";
+async function shrink(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=url});
+    let max=1000,q=0.75,out="";
+    for(let n=0;n<6;n++){
+      const sc=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+      const c=document.createElement("canvas");c.width=Math.round(img.naturalWidth*sc);c.height=Math.round(img.naturalHeight*sc);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      out=c.toDataURL("image/jpeg",q);
+      if(out.length<170000)break; max=Math.round(max*0.8);q=Math.max(0.5,q-0.07);
+    }
+    return out;
+  }finally{URL.revokeObjectURL(url)}
+}
+function showPhoto(){
+  const has=!!photoData;$("#photoPrev").hidden=!has;$("#photoPick").hidden=has;$("#photoAct").hidden=!has;
+  if(has)$("#photoPrev").src=photoData;else $("#photoPrev").removeAttribute("src");
+  if(has)$("#photoBox").classList.remove("missing");
+}
+$("#f_photo").addEventListener("change",async e=>{
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  $("#photoPickTxt").textContent="กำลังเตรียมรูป…";
+  try{photoData=await shrink(f);$("#photoMsg").textContent=""}
+  catch(err){photoData="";$("#photoPickTxt").textContent="เปิดรูปนี้ไม่ได้ ลองถ่ายหรือเลือกรูปใหม่ (JPG/PNG)";e.target.value="";showPhoto();return}
+  $("#photoPickTxt").textContent="แตะเพื่อถ่ายรูป หรือเลือกรูปจากเครื่อง";e.target.value="";showPhoto();
+});
+$("#photoRetake").onclick=()=>{photoData="";showPhoto();$("#f_photo").click()};
+
+/* ---------- read / write form ---------- */
+const val=id=>($("#"+id).value||"").trim();
+const radio=n=>(document.querySelector(`input[name="${n}"]:checked`)||{}).value||"";
+function collect(){
+  const a={};A_ITEMS.forEach(([k])=>a[k]=$("#"+k).checked);
+  const b={};B_ALL.forEach(([k])=>b[k]={r:radio(k),note:val(k+"_note")});
+  const sh=shopOf($("#f_shop").value)||{};
+  return {name:val("f_name"),area:$("#f_area").value,rrh:SHOPS.rrh[$("#f_area").value]||"",shopCode:sh.code||"",branch:sh.name||"",obDate:$("#f_date").value,checkIn:$("#f_in").value,checkOut:$("#f_out").value,
+    agency:radio("agency"),a,friend:val("f_friend"),buddy:val("f_buddy"),b,result:radio("result"),reason:val("f_reason"),
+    learn:val("f_learn"),ask:val("f_ask"),mgr:val("f_mgr"),photo:photoData};
+}
+function fill(d){
+  d=d||{};photoData=d.photo||"";showPhoto();
+  $("#f_area").value=d.area&&SHOPS.areas[d.area]?d.area:"";fillShops($("#f_area").value,d.shopCode||"");
+  [["f_name","name"],["f_date","obDate"],["f_in","checkIn"],["f_out","checkOut"],["f_friend","friend"],["f_buddy","buddy"],["f_reason","reason"],["f_learn","learn"],["f_ask","ask"],["f_mgr","mgr"]].forEach(([id,k])=>$("#"+id).value=d[k]||"");
+  document.querySelectorAll('#obForm input[type=radio]').forEach(r=>r.checked=false);
+  if(d.agency&&$("#ag_"+d.agency))$("#ag_"+d.agency).checked=true;
+  A_ITEMS.forEach(([k])=>$("#"+k).checked=!!(d.a&&d.a[k]));
+  B_ALL.map(x=>x[0]).forEach(k=>{const x=(d.b||{})[k]||{};$("#"+k+"_note").value=x.note||"";if(x.r&&$(`#${k}_${x.r}`))$(`#${k}_${x.r}`).checked=true});
+  if(d.result)$("#r_"+d.result).checked=true;
+  syncReason();
+}
+function syncReason(){
+  B_ALL.map(x=>x[0]).forEach(k=>{const imp=radio(k)==="improve",lb=$("#"+k+"_lbl"),inp=$("#"+k+"_note");
+    lb.className=imp?"hint req":"hint";lb.textContent=imp?"คำแนะนำ (ต้องระบุ)":"คำแนะนำ";inp.placeholder=imp?"ระบุสิ่งที่ควรพัฒนา":"";
+    if(!imp||inp.value.trim())inp.closest(".field").classList.remove("missing")});
+}
+let draftTimer;
+$("#obForm").addEventListener("input",()=>{syncReason();clearTimeout(draftTimer);draftTimer=setTimeout(()=>{try{localStorage.setItem(DRAFT,JSON.stringify({...collect(),photo:""}))}catch(e){}},400)});
+try{const d=JSON.parse(localStorage.getItem(DRAFT)||"null");if(d)fill(d)}catch(e){}
+if(!$("#f_date").value){const t=new Date();$("#f_date").value=new Date(t-t.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
+
+function validate(d){
+  const miss=[];
+  document.querySelectorAll(".missing").forEach(e=>e.classList.remove("missing"));
+  const need=(ok,label,id)=>{if(!ok){miss.push(label);if(id){const el=document.getElementById(id);(el.closest(".field,.check,.item,.chips")||el).classList.add("missing")}}};
+  need(d.name,"ชื่อ-นามสกุล","f_name");
+  need(d.area,"Area","f_area");
+  need(d.shopCode,"Shop Code / Shop Name","f_shop");
+  need(d.obDate,"วันที่ On Board","f_date");
+  need(d.checkIn,"Check In","f_in");
+  need(d.checkOut,"Check Out","f_out");
+  need(d.agency,"Agency","ag_DY");
+  if(!d.photo){miss.push("รูปพนักงานคู่กับผู้จัดการสาขา");$("#photoBox").classList.add("missing")}
+  const notA=A_ITEMS.filter(([k])=>!d.a[k]);
+  notA.forEach(([k])=>$("#"+k).closest(".check").classList.add("missing"));
+  if(notA.length)miss.push(`ส่วน A ยังไม่ได้ติ๊ก ${notA.length} ข้อ`);
+  need(d.friend,"เพื่อนที่ได้รู้จัก","f_friend");
+  need(d.buddy,"ชื่อพี่เลี้ยง","f_buddy");
+  const unrated=B_ALL.filter(([k])=>!d.b[k].r);
+  unrated.forEach(([k])=>$("#row_"+k).classList.add("missing"));
+  if(unrated.length)miss.push(`ผลประเมินหัวข้อ ${unrated.map(x=>x[0].slice(1)).join(", ")}`);
+  const noNote=B_ALL.map(x=>x[0]).filter(k=>d.b[k].r==="improve"&&!d.b[k].note);
+  noNote.forEach(k=>$("#"+k+"_note").closest(".field").classList.add("missing"));
+  if(noNote.length)miss.push(`คำแนะนำของหัวข้อที่ "ต้องพัฒนา" (${noNote.map(k=>k.slice(1)).join(", ")})`);
+  need(d.result,"สรุปผล ผ่าน/ไม่ผ่าน","r_pass");
+  need(d.reason,"เหตุผล","f_reason");
+  need(d.learn,'คำตอบ "วันนี้ได้เรียนรู้อะไรบ้าง?"',"f_learn");
+  need(d.ask,'คำตอบ "มีอะไรสงสัย หรืออยากเตรียมตัวเรื่องใด?"',"f_ask");
+  need(d.mgr,"ชื่อผู้จัดการสาขา / ผู้ประเมิน","f_mgr");
+  const first=document.querySelector(".missing");
+  if(first)first.scrollIntoView({behavior:"smooth",block:"center"});
+  return miss;
+}
+
+/* ---------- Buddy 7 days ---------- */
+$("#eoRows").innerHTML=[1,2,3,4,5,6,7].map(d=>{const x=BUDDY.days[d]||{};return `<tr><td>Day ${d}</td><td>${esc(x.goal||"")}</td><td>${esc(x.outcome||"")}</td><td>${esc(x.verify||"–")}</td></tr>`}).join("");
+$("#jOpen").onclick=()=>{const lb=document.createElement("div");lb.className="lightbox";lb.setAttribute("role","dialog");lb.setAttribute("aria-label","New Comer Journey");lb.tabIndex=-1;
+  lb.innerHTML=`<img src="${$("#jImg").src}" alt="${esc($("#jImg").alt)}">`;const close=()=>lb.remove();lb.onclick=close;lb.onkeydown=e=>{if(e.key==="Escape")close()};document.body.appendChild(lb);lb.focus()};
+const BSTAT=[["intro","Introduced","อธิบายแล้ว","mid"],["observed","Observed","ได้ดูงานจริง","mid"],["practiced","Practiced with Buddy","ทดลองทำภายใต้การดูแล","ok"],["follow","Need Follow-up","ต้องติดตาม","bad"]];
+const BSTAT_TXT=Object.fromEntries(BSTAT.map(x=>[x[0],x[1]+" ("+x[2]+")"]));
+const BD_DRAFT="buddy-draft-v1";
+const BD_ITEMS=BUDDY.items;
+(function buildBuddy(){
+  const areaOpts=(()=>{const byR={};AREA_LIST.forEach(a=>{const r=SHOPS.rrh[a]||"";(byR[r]=byR[r]||[]).push(a)});
+    return Object.keys(byR).map(r=>`<optgroup label="${esc(r)}">${byR[r].map(a=>`<option value="${esc(a)}">${esc(a)}</option>`).join("")}</optgroup>`).join("")})();
+  const fld=(id,label,type="text")=>`<label class="field"><span class="req">${label}</span><input type="${type}" id="${id}" autocomplete="off"></label>`;
+  let h=`<section class="blk">
+    <div class="blk-h"><h2>Buddy Checklist : 7 วันแรกก่อนเข้ารับการอบรม</h2></div>
+    <p class="hint" style="margin:0 0 12px">ใช้สำหรับแนะนำ สาธิต สังเกต และฝึกภายใต้การดูแลของ Buddy — ไม่ใช่ Final Sign-off แทน Manager/OJT Evaluation • ข้อมูลบันทึกอัตโนมัติในเครื่องนี้ กลับมากรอกต่อได้ทุกวัน แล้วกดส่งเมื่อครบ Day 7</p>
+    <div class="grid2">
+      <label class="field"><span>รหัสพนักงานผู้เรียน (ถ้ามี)</span><input type="text" id="bd_learnerId" autocomplete="off" placeholder="ยังไม่มีรหัส เว้นว่างได้"></label>${fld("bd_name","ชื่อพนักงานผู้เรียน")}
+      ${fld("bd_start","วันเริ่มเรียน","date")}
+      <label class="field"><span class="req">Area</span><select id="bd_area"><option value="">เลือก Area</option>${areaOpts}</select></label>
+      <label class="field"><span class="req">Shop Code / Shop Name</span><select id="bd_shop" disabled><option value="">เลือก Area ก่อน</option></select></label>
+      <div class="field"><span>สาขาที่เลือก</span><div class="shopcard" id="bd_shopCard">ยังไม่ได้เลือกสาขา</div></div>
+      <div class="pairrow">${fld("bd_buddyId","รหัสพนักงานผู้สอน")}${fld("bd_buddy","ชื่อ Buddy (ผู้สอน)")}</div>
+      <div class="pairrow">${fld("bd_supId","รหัสพนักงานหัวหน้างาน")}${fld("bd_sup","ชื่อหัวหน้างาน")}</div>
+    </div>
+    <div class="loadbox">
+      <div><b>ผู้สอนคนถัดไป / เปลี่ยนเครื่อง</b><div class="hint">เลือก Area และสาขาด้านบน แล้วกดค้นหา จะเห็นรายชื่อผู้เรียนที่กำลังประเมินอยู่ที่สาขานั้น เลือกชื่อแล้วกดดึงข้อมูล มาประเมินต่อได้จากทุกเครื่อง (ไม่ต้องมีรหัสพนักงาน)</div></div>
+      <div class="actions" style="margin-top:0"><button type="button" class="primary" id="bd_find">ค้นหาผู้เรียนที่สาขานี้</button><span class="msg" id="bd_loadMsg" role="status"></span></div>
+      <div class="actions" id="bd_pickRow" style="margin-top:0" hidden><select id="bd_pick" style="flex:1;min-width:220px"></select><button type="button" class="primary" id="bd_load">ดึงข้อมูลคนนี้</button></div>
+      <div class="actions" id="bd_loadAsk" style="margin-top:0" hidden><span class="msg">ข้อมูลที่กรอกในเครื่องนี้จะถูกแทนที่ด้วยข้อมูลที่บันทึกไว้ ยืนยัน?</span><button type="button" class="danger" id="bd_loadYes">ดึงข้อมูล</button><button type="button" id="bd_loadNo">ยกเลิก</button></div>
+      <div class="hint" id="bd_savedInfo"></div>
+    </div>
+  </section>
+  <section class="blk">
+    <div class="blk-h"><h2>สถานะ</h2></div>
+    <div class="legend">${BSTAT.map(x=>`<span><b>${x[1]}</b> = ${x[2]}</span>`).join("")}</div>
+    <div class="progress" style="margin-top:12px"><div class="bar"><i id="bd_bar" style="width:0%"></i></div><span id="bd_prog" class="hint">บันทึกสถานะแล้ว 0/${BD_ITEMS.length} หัวข้อ</span></div>
+  </section>`;
+  for(let d=1;d<=7;d++){
+    const day=BUDDY.days[d]||{},its=BD_ITEMS.filter(x=>x.day===d);
+    h+=`<section class="blk" id="bd_day${d}"><div class="dayhead"><div class="daybadge">Day ${d}<small>${its.length} หัวข้อ</small></div><div>
+      <div class="goal">${esc(day.goal||"")}</div><div class="outcome">${esc(day.outcome||"")}</div>${day.verify?`<div class="verify">Buddy ตรวจยืนยัน: ${esc(day.verify)}</div>`:""}</div></div>
+      <div class="dayinfo">
+        <label class="field"><span class="req">วันเริ่มเรียน Day ${d}</span><input type="date" id="bdd_${d}_date"></label>
+        <label class="field"><span class="req">รหัสพนักงานผู้สอน</span><input type="text" id="bdd_${d}_bid" autocomplete="off"></label>
+        <label class="field"><span class="req">ชื่อ Buddy (ผู้สอน)</span><input type="text" id="bdd_${d}_bname" autocomplete="off"></label>
+      </div>`;
+    its.forEach(it=>{
+      h+=`<div class="bitem" id="bi_${it.id}"><span class="cat">${esc(it.cat)}</span><h4>${esc(it.topic)}</h4>
+        <div class="act"><b>กิจกรรมของ Buddy:</b> ${esc(it.act).replace(/\n/g,"<br>")}</div>
+        ${it.remark?`<div class="remark">${esc(it.remark)}</div>`:""}
+        <div class="bctl"><div class="chips">${BSTAT.map(([k,en,th,c])=>`<label class="seg ${c}" title="${th}"><input type="radio" name="bs_${it.id}" value="${k}" id="bs_${it.id}_${k}">${en}</label>`).join("")}</div>
+          <label class="field"><span class="hint" id="bn_${it.id}_lbl">หมายเหตุ / จุดติดตาม</span><input type="text" id="bn_${it.id}" autocomplete="off"></label>
+          <label class="field"><span class="hint req">วันที่</span><input type="date" id="bdt_${it.id}"></label>
+        </div></div>`;
+    });
+    h+=`<div class="savebar"><button type="button" class="bd-save" data-day="${d}">บันทึกความคืบหน้า Day ${d}</button><span class="msg" id="bd_smsg_${d}" role="status"></span></div></section>`;
+  }
+  h+=`<section class="blk"><div class="blk-h"><span class="tag">Day 7</span><h2>Review &amp; Handover</h2></div>
+    <div class="progress"><div class="bar"><i id="bd_bar2" style="width:0%"></i></div><span id="bd_prog2" class="hint"></span></div>
+    <div id="bd_follow" style="margin-top:10px"></div>
+    <label class="field" style="margin-top:10px"><span id="bd_sumLbl">Buddy สรุปหัวข้อ Need Follow-up และส่งต่อ Manager/OJT Coach ก่อนเริ่ม Training</span><textarea id="bd_summary"></textarea></label>
+  </section>
+  <section class="blk"><div class="blk-h"><h2>Sign-off</h2></div>
+    <div class="grid2">
+      ${fld("bd_sign","Buddy Sign-off (ชื่อ Buddy)")}${fld("bd_signDate","วันที่","date")}
+      ${fld("bd_mgr","Manager Acknowledge (ชื่อผู้จัดการ)")}
+    </div>
+  </section>
+  <div class="actions">
+    <button type="button" class="bd-save" data-day="0">บันทึกความคืบหน้า</button>
+    <button type="submit" class="primary" id="bd_submit">ส่ง Buddy Checklist (ครบ Day 7)</button>
+    <button type="button" class="ghost" id="bd_clear">ล้างฟอร์ม</button>
+    <span class="hint">บันทึกความคืบหน้าได้ทุกเมื่อ • กดส่งเมื่อครบ Day 7 (ช่องที่มี * ต้องกรอกให้ครบ)</span>
+    <span class="msg" id="bd_smsg_0" role="status"></span>
+    <span class="msg" id="bd_msg" role="status"></span>
+  </div>
+  <div id="bd_clearAsk" class="actions" hidden><span class="msg">ล้างข้อมูล Buddy Checklist ที่กรอกไว้ทั้งหมด?</span><button type="button" class="danger" id="bd_clearYes">ล้าง</button><button type="button" id="bd_clearNo">ยกเลิก</button></div>`;
+  $("#bdForm").innerHTML=h;
+})();
+function bdFillShops(area,code){
+  const sel=$("#bd_shop"),list=SHOPS.areas[area]||[];
+  sel.innerHTML=area?`<option value="">เลือกสาขา (${list.length} สาขา)</option>`+list.map(([c,n])=>`<option value="${esc(c)}">${esc(c)} – ${esc(n)}</option>`).join(""):'<option value="">เลือก Area ก่อน</option>';
+  sel.disabled=!area; sel.value=code&&list.some(x=>x[0]===code)?code:""; bdShowShop();
+}
+function bdShowShop(){const s=shopOf($("#bd_shop").value);$("#bd_shopCard").innerHTML=s?`<b>${esc(s.code)}</b> · ${esc(s.name)}`:"ยังไม่ได้เลือกสาขา"}
+$("#bd_area").addEventListener("change",()=>bdFillShops($("#bd_area").value,""));
+function bdPrefill(){
+  const bid=val("bd_buddyId"),bn=val("bd_buddy"),st=$("#bd_start").value;
+  for(let n=1;n<=7;n++){if(bid&&!val(`bdd_${n}_bid`))$(`#bdd_${n}_bid`).value=bid;if(bn&&!val(`bdd_${n}_bname`))$(`#bdd_${n}_bname`).value=bn}
+  if(st&&!$("#bdd_1_date").value)$("#bdd_1_date").value=st;
+}
+["bd_buddyId","bd_buddy","bd_start"].forEach(id=>$("#"+id).addEventListener("change",()=>{bdPrefill();bdSaveDraft()}));
+$("#bd_shop").addEventListener("change",bdShowShop);
+const BD_FIELDS=[["bd_learnerId","learnerId"],["bd_name","name"],["bd_start","startDate"],["bd_buddyId","buddyId"],["bd_buddy","buddy"],["bd_supId","supId"],["bd_sup","sup"],["bd_summary","summary"],["bd_sign","buddySign"],["bd_signDate","buddySignDate"],["bd_mgr","mgrAck"]];
+function bdCollect(){
+  const d={kind:"buddy"};BD_FIELDS.forEach(([id,k])=>d[k]=val(id));
+  d.area=$("#bd_area").value;d.rrh=SHOPS.rrh[d.area]||"";
+  const sh=shopOf($("#bd_shop").value)||{};d.shopCode=sh.code||"";d.branch=sh.name||"";
+  d.items={};BD_ITEMS.forEach(it=>d.items[it.id]={s:radio("bs_"+it.id),date:$("#bdt_"+it.id).value,note:val("bn_"+it.id)});
+  d.days={};for(let n=1;n<=7;n++)d.days[n]={date:$(`#bdd_${n}_date`).value,buddyId:val(`bdd_${n}_bid`),buddy:val(`bdd_${n}_bname`)};
+  const v=Object.values(d.items);d.progress=v.filter(x=>x.s).length;d.followCount=v.filter(x=>x.s==="follow").length;
+  return d;
+}
+function bdFill(d){
+  d=d||{};BD_FIELDS.forEach(([id,k])=>$("#"+id).value=d[k]||"");
+  $("#bd_area").value=d.area&&SHOPS.areas[d.area]?d.area:"";bdFillShops($("#bd_area").value,d.shopCode||"");
+  BD_ITEMS.forEach(it=>{const x=(d.items||{})[it.id]||{};document.querySelectorAll(`input[name="bs_${it.id}"]`).forEach(r=>r.checked=r.value===x.s);$("#bdt_"+it.id).value=x.date||"";$("#bn_"+it.id).value=x.note||""});
+  for(let n=1;n<=7;n++){const x=(d.days||{})[n]||{};$(`#bdd_${n}_date`).value=x.date||"";$(`#bdd_${n}_bid`).value=x.buddyId||"";$(`#bdd_${n}_bname`).value=x.buddy||""}
+  bdSync();
+}
+function bdSync(){
+  const d=bdCollect(),n=BD_ITEMS.length,pct=Math.round(d.progress/n*100);
+  $("#bd_bar").style.width=$("#bd_bar2").style.width=pct+"%";
+  $("#bd_prog").textContent=`บันทึกสถานะแล้ว ${d.progress}/${n} หัวข้อ`;
+  $("#bd_prog2").textContent=`ความคืบหน้าที่บันทึกสถานะแล้ว ${d.progress}/${n} หัวข้อ (${pct}%)`;
+  const fl=BD_ITEMS.filter(it=>d.items[it.id].s==="follow");
+  $("#bd_follow").innerHTML=fl.length?`<b>หัวข้อ Need Follow-up (${fl.length})</b><ul class="followlist">${fl.map(it=>`<li>Day ${it.day}: ${esc(it.topic)}${d.items[it.id].note?` — <span class="hint">${esc(d.items[it.id].note)}</span>`:""}</li>`).join("")}</ul>`:'<span class="hint">ยังไม่มีหัวข้อ Need Follow-up</span>';
+  $("#bd_sumLbl").className=fl.length?"req":"";
+  BD_ITEMS.forEach(it=>{const f=d.items[it.id].s==="follow",lb=$("#bn_"+it.id+"_lbl");lb.className=f?"hint req":"hint";lb.textContent=f?"หมายเหตุ / จุดติดตาม (ต้องระบุ)":"หมายเหตุ / จุดติดตาม";
+    const ok=d.items[it.id].s&&d.items[it.id].date&&(!f||d.items[it.id].note);if(ok)$("#bi_"+it.id).classList.remove("missing")});
+}
+let bdTimer;
+let bdBase="",bdSavedBy="",bdRef="";
+function bdSaveDraft(){try{localStorage.setItem(BD_DRAFT,JSON.stringify({...bdCollect(),_base:bdBase,_by:bdSavedBy,_ref:bdRef}))}catch(e){}}
+function bdResetLink(){bdBase="";bdSavedBy="";bdRef="";bdShowSaved()}
+function bdShowSaved(){$("#bd_savedInfo").innerHTML=bdRef?`รหัสอ้างอิงผู้เรียน <b>${esc(bdRef)}</b>${bdBase?` • บันทึกบน Google Sheet ล่าสุด ${esc(thStamp(bdBase))}${bdSavedBy?` โดย ${esc(bdSavedBy)}`:""}`:""}`:""}
+$("#bdForm").addEventListener("input",()=>{bdSync();clearTimeout(bdTimer);bdTimer=setTimeout(bdSaveDraft,400)});
+$("#bdForm").addEventListener("change",bdSync);
+try{const d=JSON.parse(localStorage.getItem(BD_DRAFT)||"null");if(d){bdFill(d);bdBase=d._base||"";bdSavedBy=d._by||"";bdRef=d._ref||""}else bdSync()}catch(e){bdSync()}
+function bdValidate(d){
+  const miss=[];
+  document.querySelectorAll("#bdForm .missing").forEach(e=>e.classList.remove("missing"));
+  const need=(ok,label,id)=>{if(!ok){miss.push(label);const el=document.getElementById(id);(el.closest(".field")||el).classList.add("missing")}};
+  need(d.name,"ชื่อพนักงานผู้เรียน","bd_name");need(d.startDate,"วันเริ่มเรียน","bd_start");
+  need(d.area,"Area","bd_area");need(d.shopCode,"Shop Code / Shop Name","bd_shop");
+  need(d.buddyId,"รหัสพนักงานผู้สอน","bd_buddyId");need(d.buddy,"ชื่อ Buddy","bd_buddy");need(d.supId,"รหัสพนักงานหัวหน้างาน","bd_supId");need(d.sup,"ชื่อหัวหน้างาน","bd_sup");
+  for(let n=1;n<=7;n++){const x=d.days[n];need(x.date,`วันเริ่มเรียน Day ${n}`,`bdd_${n}_date`);need(x.buddyId,`รหัสพนักงานผู้สอน Day ${n}`,`bdd_${n}_bid`);need(x.buddy,`ชื่อ Buddy Day ${n}`,`bdd_${n}_bname`)}
+  const bad=BD_ITEMS.filter(it=>{const x=d.items[it.id];return !x.s||!x.date||(x.s==="follow"&&!x.note)});
+  bad.forEach(it=>$("#bi_"+it.id).classList.add("missing"));
+  if(bad.length){const days=[...new Set(bad.map(it=>it.day))];miss.push(`สถานะ/วันที่ ยังไม่ครบ ${bad.length} หัวข้อ (Day ${days.join(", ")})`)}
+  if(d.followCount)need(d.summary,"สรุปหัวข้อ Need Follow-up","bd_summary");
+  need(d.buddySign,"Buddy Sign-off","bd_sign");need(d.buddySignDate,"วันที่ Sign-off","bd_signDate");need(d.mgrAck,"Manager Acknowledge","bd_mgr");
+  const first=document.querySelector("#bdForm .missing");if(first)first.scrollIntoView({behavior:"smooth",block:"center"});
+  return miss;
+}
+$("#bd_clear").onclick=()=>{$("#bd_clearAsk").hidden=false};
+$("#bd_clearNo").onclick=()=>{$("#bd_clearAsk").hidden=true};
+$("#bd_clearYes").onclick=()=>{bdFill({});bdResetLink();try{localStorage.removeItem(BD_DRAFT)}catch(e){};$("#bd_clearAsk").hidden=true;$("#bd_msg").textContent=""};
+
+/* ---------- Google Sheet connection ---------- */
+/* วาง URL ของ Web App (Google Apps Script) ที่ได้จากขั้นตอน Deploy ไว้ระหว่างเครื่องหมายคำพูดด้านล่าง */
+const SCRIPT_URL="SCRIPT_URL="https://script.google.com/macros/s/AKfycby.../exec";
+let booted=false,isAdmin=false,adminKey="";
+const MINE="ob-mine-v1";
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2600)}
+function note(t){const n=$("#accessNote");n.textContent=t;n.hidden=!t}
+if(!SCRIPT_URL)note("ยังไม่ได้ตั้งค่า SCRIPT_URL ในไฟล์นี้ จึงยังดึงข้อมูลไม่ได้");
+async function api(payload){
+  const r=await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+  const j=await r.json(); if(!j.ok)throw Object.assign(new Error(j.error||"error"),{code:j.error,data:j}); return j;
+}
+
+$("#obForm").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  const d=collect(),miss=validate(d),msg=$("#formMsg");
+  if(miss.length){msg.className="msg err";msg.textContent="ยังขาด: "+miss.join(" • ");return}
+  if(!SCRIPT_URL){msg.className="msg err";msg.textContent="ยังไม่ได้ตั้งค่าการเชื่อมต่อ Google Sheet กรุณาแจ้งผู้ดูแลระบบ";return}
+  const btn=$("#submitBtn");btn.disabled=true;msg.className="msg";msg.textContent="กำลังส่ง…";
+  const body={...d,kind:"ob",v:1,submittedAt:new Date().toISOString(),improveCount:Object.values(d.b).filter(x=>x.r==="improve").length};
+  const photo=body.photo;delete body.photo;
+  const t=table2d([body]);
+  try{
+    const res=await api({action:"submit",kind:"ob",record:body,header:t[0],row:t[1],photo});
+    msg.className="msg ok";msg.textContent=`ส่งแบบฟอร์มของ ${d.name} เรียบร้อยแล้ว`;
+    try{const m=JSON.parse(localStorage.getItem(MINE)||"[]");m.unshift({...body,_id:res.id,photoUrl:res.photoUrl||""});localStorage.setItem(MINE,JSON.stringify(m.slice(0,200)))}catch(e){}
+    loadMine();
+    try{localStorage.removeItem(DRAFT)}catch(e){}
+    fill({obDate:d.obDate,area:d.area,shopCode:d.shopCode,mgr:d.mgr});
+    window.scrollTo({top:0,behavior:"smooth"});toast("ส่งแล้ว");
+  }catch(e){
+    msg.className="msg err";msg.textContent="ส่งไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วกดส่งอีกครั้ง ข้อมูลที่กรอกยังอยู่ครบ";
+  }finally{btn.disabled=false}
+});
+/* save progress / load progress */
+function bdLastDay(d){let last=0;BD_ITEMS.forEach(it=>{const x=d.items[it.id];if(x.s||x.date||x.note)last=Math.max(last,it.day)});for(let n=1;n<=7;n++){if(d.days[n].date)last=Math.max(last,n)}return last}
+function bdNeedKey(d,msgEl){
+  document.querySelectorAll("#bdForm .missing").forEach(e=>e.classList.remove("missing"));
+  const miss=[];[["bd_name","ชื่อพนักงานผู้เรียน",d.name],["bd_shop","สาขา (Area / Shop)",d.shopCode]].forEach(([id,l,v])=>{if(!v){miss.push(l);$("#"+id).closest(".field").classList.add("missing")}});
+  if(miss.length){msgEl.className="msg err";msgEl.textContent="กรอก "+miss.join(" • ")+" ก่อน";return false}
+  return true;
+}
+async function bdSaveProgress(day,force){
+  const msgEl=$("#bd_smsg_"+day),d=bdCollect();
+  if(!bdNeedKey(d,msgEl)){$("#bd_name").scrollIntoView({behavior:"smooth",block:"center"});return}
+  if(!SCRIPT_URL){msgEl.className="msg err";msgEl.textContent="ยังไม่ได้ตั้งค่าการเชื่อมต่อ Google Sheet";return}
+  const last=bdLastDay(d),by=((d.days[last]||{}).buddy)||d.buddy||"";
+  document.querySelectorAll(".bd-save").forEach(b=>b.disabled=true);msgEl.className="msg";msgEl.textContent="กำลังบันทึก…";
+  try{
+    const res=await api({action:"save_progress",record:{...d,ref:bdRef,lastDay:last,savedBy:by},base:bdBase,force:!!force});
+    bdBase=res.savedAt;bdSavedBy=by;bdRef=res.ref||bdRef;bdSaveDraft();bdShowSaved();
+    msgEl.className="msg ok";msgEl.textContent=`บันทึกแล้ว (ถึง Day ${last||1}) — ผู้สอนคนถัดไปดึงข้อมูลได้จากทุกเครื่อง`;toast("บันทึกความคืบหน้าแล้ว");
+  }catch(e){
+    if(e.code==="conflict"){
+      const x=e.data||{};msgEl.className="msg err";
+      msgEl.innerHTML=`<span class="conflict">มีข้อมูลที่ ${esc(x.by||"ผู้สอนคนอื่น")} บันทึกไว้เมื่อ ${esc(thStamp(x.savedAt))} ซึ่งใหม่กว่าในเครื่องนี้ <button type="button" class="primary" data-act="load">ดึงข้อมูลล่าสุด</button><button type="button" class="danger" data-act="force">บันทึกทับ</button></span>`;
+      msgEl.querySelector('[data-act="load"]').onclick=()=>{msgEl.textContent="";bdLoadByRef(bdRef,true)};
+      msgEl.querySelector('[data-act="force"]').onclick=()=>bdSaveProgress(day,true);
+    }else{msgEl.className="msg err";msgEl.textContent="บันทึกไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง (ข้อมูลยังอยู่ในเครื่องนี้)"}
+  }finally{document.querySelectorAll(".bd-save").forEach(b=>b.disabled=false)}
+}
+document.querySelectorAll(".bd-save").forEach(b=>b.onclick=()=>bdSaveProgress(+b.dataset.day,false));
+let bdPending="";
+async function bdFind(){
+  const msgEl=$("#bd_loadMsg"),shop=$("#bd_shop").value;
+  document.querySelectorAll("#bdForm .missing").forEach(e=>e.classList.remove("missing"));
+  $("#bd_pickRow").hidden=true;$("#bd_loadAsk").hidden=true;
+  if(!shop){msgEl.className="msg err";msgEl.textContent="เลือก Area และสาขาด้านบนก่อน";$("#bd_shop").closest(".field").classList.add("missing");$("#bd_area").scrollIntoView({behavior:"smooth",block:"center"});return}
+  if(!SCRIPT_URL){msgEl.className="msg err";msgEl.textContent="ยังไม่ได้ตั้งค่าการเชื่อมต่อ Google Sheet";return}
+  $("#bd_find").disabled=true;msgEl.className="msg";msgEl.textContent="กำลังค้นหา…";
+  try{
+    const res=await api({action:"list_progress",shopCode:shop});const items=res.items||[];
+    if(!items.length){msgEl.className="msg err";msgEl.textContent="ยังไม่มีผู้เรียนที่กำลังประเมินอยู่ที่สาขานี้ เริ่มกรอกใหม่ได้เลย";return}
+    $("#bd_pick").innerHTML=items.map(x=>`<option value="${esc(x.ref)}">${esc(x.name)}${x.learnerId?` (${esc(x.learnerId)})`:""} • เริ่ม ${esc(thDate(x.startDate))} • บันทึกถึง Day ${x.lastDay||1}${x.savedBy?` โดย ${esc(x.savedBy)}`:""} • รหัสอ้างอิง ${esc(x.ref)}</option>`).join("");
+    if(bdRef&&items.some(x=>x.ref===bdRef))$("#bd_pick").value=bdRef;
+    $("#bd_pickRow").hidden=false;msgEl.className="msg ok";msgEl.textContent=`พบ ${items.length} คน เลือกชื่อแล้วกด ดึงข้อมูลคนนี้`;
+  }catch(e){msgEl.className="msg err";msgEl.textContent="ค้นหาไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง"}
+  finally{$("#bd_find").disabled=false}
+}
+async function bdLoadByRef(ref,confirmed){
+  const msgEl=$("#bd_loadMsg"),d=bdCollect(),shop=d.shopCode;
+  if(!ref||!shop){bdFind();return}
+  if(!confirmed&&d.progress>0&&ref!==bdRef){bdPending=ref;$("#bd_loadAsk").hidden=false;return}
+  $("#bd_loadAsk").hidden=true;$("#bd_load").disabled=true;msgEl.className="msg";msgEl.textContent="กำลังดึงข้อมูล…";
+  try{
+    const res=await api({action:"load_progress",ref,shopCode:shop});
+    const r=res.record;bdFill(r);bdBase=r.savedAt||"";bdSavedBy=r.savedBy||"";bdRef=r.ref||r._key||ref;bdSaveDraft();bdShowSaved();
+    $("#bd_pickRow").hidden=true;
+    msgEl.className="msg ok";msgEl.textContent=`ดึงข้อมูลของ ${r.name} แล้ว (บันทึกถึง Day ${r.lastDay||1}) ประเมินต่อได้เลย`;
+    const next=Math.min(7,(r.lastDay||0)+1);setTimeout(()=>$("#bd_day"+next).scrollIntoView({behavior:"smooth",block:"start"}),300);
+  }catch(e){
+    msgEl.className="msg err";
+    msgEl.textContent=e.code==="not_found"?"ไม่พบข้อมูลนี้แล้ว (อาจส่งครบ Day 7 หรือถูกลบไปแล้ว) กดค้นหาอีกครั้ง":"ดึงข้อมูลไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง";
+  }finally{$("#bd_load").disabled=false}
+}
+$("#bd_find").onclick=bdFind;
+$("#bd_load").onclick=()=>bdLoadByRef($("#bd_pick").value,false);
+$("#bd_shop").addEventListener("change",()=>{$("#bd_pickRow").hidden=true;if(bdRef||bdBase){bdResetLink();bdSaveDraft()}});
+$("#bd_loadYes").onclick=()=>bdLoadByRef(bdPending,true);
+$("#bd_loadNo").onclick=()=>{$("#bd_loadAsk").hidden=true};
+
+$("#bdForm").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  const d=bdCollect(),miss=bdValidate(d),msg=$("#bd_msg");
+  if(miss.length){msg.className="msg err";msg.textContent="ยังขาด: "+miss.join(" • ");return}
+  if(!SCRIPT_URL){msg.className="msg err";msg.textContent="ยังไม่ได้ตั้งค่าการเชื่อมต่อ Google Sheet กรุณาแจ้งผู้ดูแลระบบ";return}
+  const btn=$("#bd_submit");btn.disabled=true;msg.className="msg";msg.textContent="กำลังส่ง…";
+  const body={...d,ref:bdRef,v:1,submittedAt:new Date().toISOString()};
+  const t=buddyTable2d([body]);
+  try{
+    const res=await api({action:"submit",kind:"buddy",record:body,header:t[0],row:t[1]});
+    msg.className="msg ok";msg.textContent=`ส่ง Buddy Checklist ของ ${d.name} เรียบร้อยแล้ว`;
+    try{const m=JSON.parse(localStorage.getItem(MINE)||"[]");m.unshift({...body,_id:res.id});localStorage.setItem(MINE,JSON.stringify(m.slice(0,200)))}catch(e){}
+    loadMine();
+    try{localStorage.removeItem(BD_DRAFT)}catch(e){}
+    bdResetLink();
+    bdFill({area:d.area,shopCode:d.shopCode,buddyId:d.buddyId,buddy:d.buddy,supId:d.supId,sup:d.sup});bdPrefill();
+    window.scrollTo({top:0,behavior:"smooth"});toast("ส่งแล้ว");
+  }catch(e){msg.className="msg err";msg.textContent="ส่งไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วกดส่งอีกครั้ง ข้อมูลที่กรอกยังอยู่ครบ"}
+  finally{btn.disabled=false}
+});
+$("#clearBtn").onclick=()=>{$("#clearConfirm").hidden=false};
+$("#clearNo").onclick=()=>{$("#clearConfirm").hidden=true};
+$("#clearYes").onclick=()=>{fill({});try{localStorage.removeItem(DRAFT)}catch(e){};$("#clearConfirm").hidden=true;$("#formMsg").textContent=""};
+
+/* ---------- views ---------- */
+const PAGE="support";
+function route(){
+  let v=(location.hash||"#buddy").slice(1).toLowerCase();
+  if(!["form","buddy","mine"].includes(v))v="buddy";
+  if(PAGE==="support")v="admin";
+  $("#viewForm").hidden=v!=="form";$("#viewMine").hidden=v!=="mine";$("#viewBuddy").hidden=v!=="buddy";$("#viewAdmin").hidden=v!=="admin";
+  $("#wrap").classList.toggle("wide",v==="admin");
+  document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.dataset.view===v)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+}
+addEventListener("hashchange",route);route();
+
+const thDate=s=>{if(!s)return"–";const [y,m,d]=s.split("-");return `${d}/${m}/${+y+543}`};
+const thStamp=s=>{if(!s)return"–";const t=new Date(s);return t.toLocaleString("th-TH",{dateStyle:"short",timeStyle:"short"})};
+const resPill=r=>r==="pass"?'<span class="pill ok">ผ่าน</span>':r==="fail"?'<span class="pill bad">ไม่ผ่าน</span>':'<span class="pill n">–</span>';
+
+/* mine */
+let mine=[];
+function loadMine(){try{mine=JSON.parse(localStorage.getItem(MINE)||"[]")}catch(e){mine=[]}renderMine()}
+function renderMine(){
+  const box=$("#mineList");
+  if(!mine.length){box.innerHTML='<div class="empty">ยังไม่มีแบบฟอร์มที่ส่งจากเครื่องนี้ เมื่อกดส่ง Buddy 7 วัน หรือ แบบประเมิน OB 7 วัน รายการจะแสดงที่นี่</div>';return}
+  box.innerHTML=`<div class="tablebox" style="margin-top:0"><table style="min-width:600px"><thead><tr><th>ประเภท</th><th>วันที่</th><th>ชื่อ-นามสกุล</th><th>Shop</th><th>ผล</th><th>ส่งเมื่อ</th></tr></thead><tbody>${
+    mine.map((r,i)=>{const bd=r.kind==="buddy";return `<tr data-i="${i}" tabindex="0"><td>${bd?'<span class="pill n">Buddy 7 วัน</span>':'<span class="pill n">แบบประเมิน OB 7 วัน</span>'}</td><td class="num">${thDate(bd?r.startDate:r.obDate)}</td><td>${esc(r.name)}</td><td>${esc(r.branch)}</td><td>${bd?followPill(r):resPill(r.result)}</td><td class="num">${thStamp(r.submittedAt)}</td></tr>`}).join("")}</tbody></table></div>`;
+  box.querySelectorAll("tr[data-i]").forEach(tr=>{const go=()=>openDetail(mine[+tr.dataset.i],false);tr.onclick=go;tr.onkeydown=e=>{if(e.key==="Enter")go()}});
+}
+const followPill=r=>r.followCount?`<span class="pill bad">Follow-up ${r.followCount}</span>`:'<span class="pill ok">ไม่มีติดตาม</span>';
+
+/* admin */
+let KIND="buddy";
+const DATA={ob:[],buddy:[],progress:[]};
+const KLABEL={buddy:"Buddy 7 วัน",progress:"Buddy กำลังประเมิน",ob:"แบบประเมิน OB 7 วัน"};
+let rows=[];
+AGENCIES.forEach(a=>$("#fAgency").insertAdjacentHTML("beforeend",`<option value="${a}">${a}</option>`));
+["q","fArea","fAgency","fResult","fFrom","fTo"].forEach(id=>$("#"+id).addEventListener("input",renderAdmin));
+document.querySelectorAll("#kindSwitch button").forEach(b=>b.onclick=()=>{if(KIND===b.dataset.kind)return;KIND=b.dataset.kind;setKindUI();renderAdmin()});
+function setKindUI(){
+  const bd=KIND!=="ob";
+  document.querySelectorAll("#kindSwitch button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.kind===KIND)));
+  $("#fAgency").hidden=bd;$("#fAgency").value="";
+  $("#fResult").innerHTML=bd?'<option value="">ทุกสถานะ</option><option value="follow">มี Need Follow-up</option><option value="clear">ไม่มีหัวข้อติดตาม</option>':'<option value="">ทุกผล</option><option value="pass">ผ่าน</option><option value="fail">ไม่ผ่าน</option>';
+  $("#fFromLbl").textContent=bd?"ตั้งแต่วันเริ่มเรียน":"ตั้งแต่วันที่ OB";$("#fToLbl").textContent=bd?"ถึงวันเริ่มเรียน":"ถึงวันที่ OB";
+  $("#q").placeholder=bd?"ค้นหา ชื่อ / รหัสพนักงาน / รหัสอ้างอิง / Shop / Buddy / หัวหน้างาน":"ค้นหา ชื่อ / Shop / Code / พี่เลี้ยง / ผู้ประเมิน";
+  $("#adminHead").innerHTML=bd?`<tr><th>วันเริ่มเรียน</th><th>ผู้เรียน</th><th>Area</th><th>Shop</th><th>${KIND==="progress"?"บันทึกถึง":"Buddy"}</th><th>หัวหน้างาน</th><th>ความคืบหน้า</th><th>Need Follow-up</th><th>${KIND==="progress"?"บันทึกล่าสุด":"ส่งเมื่อ"}</th></tr>`:"<tr><th>วันที่ OB</th><th>ชื่อ-นามสกุล</th><th>Agency</th><th>Area</th><th>Shop</th><th>ผล</th><th>ต้องพัฒนา</th><th>ผู้ประเมิน</th><th>ส่งเมื่อ</th></tr>";
+}
+setKindUI();
+function filtered(){
+  const bd=KIND!=="ob",ar=$("#fArea").value,q=$("#q").value.trim().toLowerCase(),ag=$("#fAgency").value,rs=$("#fResult").value,fr=$("#fFrom").value,to=$("#fTo").value;
+  return rows.filter(r=>{
+    const dt=bd?r.startDate:r.obDate,txt=(bd?[r.name,r.learnerId,r.ref,r.branch,r.shopCode,r.buddy,r.buddyId,r.sup,r.mgrAck]:[r.name,r.branch,r.shopCode,r.buddy,r.mgr]).join(" ").toLowerCase();
+    const okR=!rs||(bd?(rs==="follow"?r.followCount>0:!r.followCount):r.result===rs);
+    return (!q||txt.includes(q))&&(!ar||r.area===ar)&&(bd||!ag||r.agency===ag)&&okR&&(!fr||dt>=fr)&&(!to||dt<=to);
+  });
+}
+function renderAdmin(){
+  const bd=KIND!=="ob",pg=KIND==="progress",when=r=>r.submittedAt||r.savedAt||"";
+  rows=DATA[KIND]=DATA[KIND].slice().sort((a,b)=>when(b).localeCompare(when(a)));
+  document.querySelectorAll("#kindSwitch button").forEach(b=>b.textContent=KLABEL[b.dataset.kind]+` (${DATA[b.dataset.kind].length})`);
+  const f=filtered(),total=`<div class="stat"><b>${f.length}</b><span>แบบฟอร์ม${f.length!==rows.length?` (จาก ${rows.length})`:""}</span></div>`;
+  if(bd){
+    const fol=f.filter(r=>r.followCount>0).length;
+    $("#stats").innerHTML=total+`<div class="stat ok"><b>${f.length-fol}</b><span>ไม่มีหัวข้อติดตาม</span></div><div class="stat bad"><b>${fol}</b><span>มี Need Follow-up</span></div>`+
+      RRH_ORDER.map(x=>`<div class="stat"><b>${f.filter(r=>r.rrh===x).length}</b><span>${x}</span></div>`).join("");
+    $("#adminRows").innerHTML=f.map((r,i)=>`<tr data-i="${i}" tabindex="0"><td class="num">${thDate(r.startDate)}</td><td><span class="hint">${esc(r.learnerId||"")}</span> ${esc(r.name)}</td><td>${esc(r.area||"–")}</td><td><span class="hint">${esc(r.shopCode||"")}</span> ${esc(r.branch)}</td><td>${pg?`<span class="pill n">Day ${r.lastDay||1}</span> <span class="hint">${esc(r.savedBy||"")}</span>`:esc(r.buddy||"–")}</td><td>${esc(r.sup||"–")}</td><td class="num">${r.progress||0}/${BD_ITEMS.length}</td><td>${followPill(r)}</td><td class="num">${thStamp(when(r))}</td></tr>`).join("");
+  }else{
+    const pass=f.filter(r=>r.result==="pass").length,fail=f.filter(r=>r.result==="fail").length;
+    $("#stats").innerHTML=total+`<div class="stat ok"><b>${pass}</b><span>ผ่าน</span></div><div class="stat bad"><b>${fail}</b><span>ไม่ผ่าน</span></div>`+
+      AGENCIES.map(a=>`<div class="stat"><b>${f.filter(r=>r.agency===a).length}</b><span>${a}</span></div>`).join("");
+    $("#adminRows").innerHTML=f.map((r,i)=>`<tr data-i="${i}" tabindex="0"><td class="num">${thDate(r.obDate)}</td><td>${esc(r.name)}</td><td>${esc(r.agency)}</td><td>${esc(r.area||"–")}</td><td><span class="hint">${esc(r.shopCode||"")}</span> ${esc(r.branch)}</td><td>${resPill(r.result)}</td><td class="num">${r.improveCount?`<span class="pill bad">${r.improveCount} หัวข้อ</span>`:"–"}</td><td>${esc(r.mgr)}</td><td class="num">${thStamp(r.submittedAt)}</td></tr>`).join("");
+  }
+  $("#adminRows").querySelectorAll("tr").forEach(tr=>{const go=()=>openDetail(f[+tr.dataset.i],true);tr.onclick=go;tr.onkeydown=e=>{if(e.key==="Enter")go()}});
+  const em=$("#adminEmpty");
+  em.hidden=f.length>0;
+  em.textContent=rows.length?"ไม่พบรายการตามเงื่อนไขที่เลือก":(bd?"ยังไม่มี Buddy Checklist ที่ส่งเข้ามา":"ยังไม่มีแบบประเมิน OB 7 วันที่ส่งเข้ามา")+" เมื่อสาขากดส่ง รายการจะขึ้นที่นี่";
+}
+async function loadAll(){
+  const m=$("#adminMsg");m.className="msg";m.textContent="กำลังโหลดข้อมูล…";
+  try{
+    const r=await fetch(SCRIPT_URL+"?action=list&key="+encodeURIComponent(adminKey));
+    const j=await r.json();
+    if(!j.ok){if(j.error==="bad_key"){logout("รหัส Support ไม่ถูกต้อง")}else{m.className="msg err";m.textContent="โหลดข้อมูลไม่สำเร็จ กด โหลดใหม่"}return false}
+    DATA.ob=(j.rows||[]).map(x=>({kind:"ob",...x}));DATA.buddy=(j.buddy||[]).map(x=>({...x,kind:"buddy"}));DATA.progress=(j.progress||[]).map(x=>({...x,kind:"progress"}));
+    m.textContent=`อัปเดตล่าสุด ${new Date().toLocaleTimeString("th-TH",{timeStyle:"short"})} น.`;renderAdmin();return true;
+  }catch(e){m.className="msg err";m.textContent="เชื่อมต่อ Google Sheet ไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วกด โหลดใหม่";return false}
+}
+function showAdmin(on){$("#loginBox").hidden=on;$("#adminBody").hidden=!on}
+function logout(msg){adminKey="";isAdmin=false;try{sessionStorage.removeItem("ob-admin")}catch(e){};showAdmin(false);$("#loginMsg").className="msg err";$("#loginMsg").textContent=msg||""}
+$("#loginForm").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  if(!SCRIPT_URL){$("#loginMsg").className="msg err";$("#loginMsg").textContent="ยังไม่ได้ตั้งค่า SCRIPT_URL ในไฟล์นี้";return}
+  adminKey=$("#adminKey").value;$("#loginBtn").disabled=true;$("#loginMsg").className="msg";$("#loginMsg").textContent="กำลังตรวจสอบ…";
+  showAdmin(true);
+  const ok=await loadAll();$("#loginBtn").disabled=false;
+  if(ok){isAdmin=true;$("#loginMsg").textContent="";$("#adminKey").value="";try{sessionStorage.setItem("ob-admin",adminKey)}catch(e){}}
+});
+$("#logoutBtn").onclick=()=>logout("");
+$("#refreshBtn").onclick=()=>loadAll();
+
+/* detail */
+function detailHTML(r){
+  const items=B_ALL.map(([k,t])=>[t,(r.b||{})[k]||{}]);
+  const o=(r.b||{}).b10||{};if(o.text||o.r)items.push([`10. อื่น ๆ : ${o.text||"-"}`,o]);
+  return `<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><h2>${esc(r.name)}</h2><div class="hint">${esc(r.shopCode||"")} ${esc(r.branch)} • ${esc(r.area||"")} • ${esc(r.agency)} • OB ${thDate(r.obDate)}</div></div><button type="button" id="closeD">ปิด</button></div>
+  ${r.photo?`<section class="blk"><img class="dphoto" src="${esc(r.photo)}" alt="รูปพนักงานคู่กับผู้จัดการสาขา"></section>`:r.photoUrl?`<section class="blk"><a href="${esc(r.photoUrl)}" target="_blank" rel="noopener">เปิดรูปพนักงานคู่ผู้จัดการ (Google Drive)</a></section>`:""}
+  <section class="blk"><dl class="dl">
+   <dt>Check In / Out</dt><dd>${esc(r.checkIn||"–")} – ${esc(r.checkOut||"–")} น.</dd>
+   <dt>ผลสรุป</dt><dd>${resPill(r.result)} ${r.reason?esc(r.reason):""}</dd>
+   <dt>พี่เลี้ยง</dt><dd>${esc(r.buddy||"–")}</dd>
+   <dt>เพื่อนที่ได้รู้จัก</dt><dd>${esc(r.friend||"–")}</dd>
+   <dt>ผู้ประเมิน</dt><dd>${esc(r.mgr||"–")}</dd>
+   <dt>ส่งเมื่อ</dt><dd>${thStamp(r.submittedAt)}</dd></dl></section>
+  <section class="blk"><div class="blk-h"><span class="tag">A</span><h2>สิ่งที่สาขาแนะนำ</h2></div>
+   ${A_ITEMS.map(([k,t])=>`<div>${(r.a||{})[k]?'<span class="pill ok">แนะนำแล้ว</span>':'<span class="pill n">ยังไม่ได้ติ๊ก</span>'} ${t}</div>`).join("")}</section>
+  <section class="blk"><div class="blk-h"><span class="tag">B</span><h2>พฤติกรรมระหว่างวัน</h2></div>
+   ${items.map(([t,x])=>`<div class="ditem"><b>${esc(t)}</b><span>${x.r==="pass"?'<span class="pill ok">ผ่าน</span>':x.r==="improve"?'<span class="pill bad">ต้องพัฒนา</span>':'<span class="pill n">–</span>'}</span>${x.note?`<div class="note">คำแนะนำ: ${esc(x.note)}</div>`:""}</div>`).join("")}</section>
+  <section class="blk"><div class="blk-h"><span class="tag">C</span><h2>คุยกันท้ายวัน</h2></div><dl class="dl">
+   <dt>ได้เรียนรู้อะไร</dt><dd>${esc(r.learn||"–")}</dd><dt>สงสัย / อยากเตรียมตัว</dt><dd>${esc(r.ask||"–")}</dd></dl></section>`;
+}
+function buddyDetailHTML(r){
+  const it=r.items||{};
+  return `<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><h2>${esc(r.name)} <span class="hint">${esc(r.learnerId||"ยังไม่มีรหัสพนักงาน")}</span></h2>${r.ref?`<div class="hint">รหัสอ้างอิง ${esc(r.ref)}</div>`:""}<div class="hint">Buddy 7 วัน • ${esc(r.shopCode||"")} ${esc(r.branch)} • ${esc(r.area||"")} • เริ่ม ${thDate(r.startDate)}</div></div><button type="button" id="closeD">ปิด</button></div>
+  <section class="blk"><dl class="dl">
+   <dt>Buddy (ผู้สอน)</dt><dd>${esc(r.buddy||"–")} <span class="hint">${esc(r.buddyId||"")}</span></dd>
+   <dt>หัวหน้างาน</dt><dd>${esc(r.sup||"–")} <span class="hint">${esc(r.supId||"")}</span></dd>
+   <dt>ความคืบหน้า</dt><dd>${r.progress||0}/${BD_ITEMS.length} หัวข้อ • ${followPill(r)}</dd>
+   <dt>สรุปส่งต่อ</dt><dd>${esc(r.summary||"–")}</dd>
+   <dt>Buddy Sign-off</dt><dd>${esc(r.buddySign||"–")} • ${thDate(r.buddySignDate)}</dd>
+   <dt>Manager Acknowledge</dt><dd>${esc(r.mgrAck||"–")}</dd>
+   ${r.kind==="progress"?`<dt>สถานะ</dt><dd><span class="pill n">กำลังประเมิน • บันทึกถึง Day ${r.lastDay||1}</span></dd><dt>บันทึกล่าสุด</dt><dd>${thStamp(r.savedAt)}${r.savedBy?` โดย ${esc(r.savedBy)}`:""}</dd>`:`<dt>ส่งเมื่อ</dt><dd>${thStamp(r.submittedAt)}</dd>`}</dl></section>
+  ${[1,2,3,4,5,6,7].map(d=>`<section class="blk"><div class="blk-h"><span class="tag">Day ${d}</span><h2>${esc((BUDDY.days[d]||{}).goal||"")}</h2></div>
+   ${(()=>{const x=(r.days||{})[d];return x?`<div class="hint" style="margin-bottom:6px">วันเริ่มเรียน ${thDate(x.date)} • ผู้สอน ${esc(x.buddy||"–")} <span>${esc(x.buddyId||"")}</span></div>`:""})()}
+   ${BD_ITEMS.filter(x=>x.day===d).map(x=>{const v=it[x.id]||{};return `<div class="ditem"><b>${esc(x.topic)}</b><span>${v.s==="follow"?'<span class="pill bad">Need Follow-up</span>':v.s==="practiced"?'<span class="pill ok">Practiced</span>':v.s?`<span class="pill n">${esc((BSTAT_TXT[v.s]||"").split(" (")[0])}</span>`:'<span class="pill n">–</span>'}</span><div class="note">${thDate(v.date)}${v.note?` • ${esc(v.note)}`:""}</div></div>`}).join("")}</section>`).join("")}`;
+}
+function openDetail(r,admin){
+  const ov=$("#overlay");
+  ov.innerHTML=`<div class="drawer" role="dialog" aria-modal="true">${r.kind==="buddy"||r.kind==="progress"?buddyDetailHTML(r):detailHTML(r)}${admin?`<div class="actions"><button type="button" class="danger" id="delBtn">ลบรายการนี้</button><span id="delAsk" hidden><span class="msg">ลบแล้วกู้คืนไม่ได้ ยืนยัน?</span> <button type="button" class="danger" id="delYes">ลบ</button> <button type="button" id="delNo">ยกเลิก</button></span></div>`:""}</div>`;
+  ov.hidden=false;
+  const close=()=>{ov.hidden=true;ov.innerHTML=""};
+  ov.onclick=e=>{if(e.target===ov)close()};
+  $("#closeD").onclick=close;$("#closeD").focus();
+  ov.onkeydown=e=>{if(e.key==="Escape")close()};
+  if(admin){
+    $("#delBtn").onclick=()=>{$("#delAsk").hidden=false};
+    $("#delNo").onclick=()=>{$("#delAsk").hidden=true};
+    $("#delYes").onclick=async()=>{
+      try{const k=r.kind==="buddy"||r.kind==="progress"?r.kind:"ob",id=k==="progress"?r._key:r._id;await api({action:"delete",key:adminKey,id,kind:k});DATA[k]=DATA[k].filter(x=>(k==="progress"?x._key:x._id)!==id);renderAdmin();close();toast("ลบแล้ว")}
+      catch(e){toast("ลบไม่สำเร็จ ลองอีกครั้ง")}
+    };
+  }
+}
+
+/* export */
+function table2d(list){
+  const head=["ส่งเมื่อ","วันที่ OB","ชื่อ-นามสกุล","Agency","RRH","Area","Shop Code","Shop Name","Check In","Check Out",
+    ...A_ITEMS.map(x=>"A: "+x[1]),"เพื่อนที่ได้รู้จัก","พี่เลี้ยง",
+    ...B_ALL.flatMap(([,t])=>[t,t+" (คำแนะนำ)"]),"รูปพนักงานคู่ผู้จัดการ","จำนวนหัวข้อต้องพัฒนา",
+    "ผลสรุป","เหตุผล","วันนี้ได้เรียนรู้อะไร","สงสัย/อยากเตรียมตัว","ผู้จัดการสาขา/ผู้ประเมิน"];
+  const lines=[head];
+  list.forEach(r=>{const b=r.b||{},o=b.b10||{};lines.push([thStamp(r.submittedAt),thDate(r.obDate),r.name,r.agency,r.rrh||"",r.area||"",r.shopCode||"",r.branch,r.checkIn,r.checkOut,
+    ...A_ITEMS.map(([k])=>(r.a||{})[k]?"✓":""),r.friend,r.buddy,
+    ...B_ALL.flatMap(([k])=>[RATE[(b[k]||{}).r]||"",(b[k]||{}).note||""]),r.photoUrl||(r.photo?"มีรูป":""),r.improveCount||0,
+    r.result==="pass"?"ผ่าน":r.result==="fail"?"ไม่ผ่าน":"",r.reason,r.learn,r.ask,r.mgr])});
+  return lines;
+}
+function buddyTable2d(list){
+  const head=["ส่งเมื่อ","รหัสอ้างอิง","รหัสพนักงานผู้เรียน","ชื่อพนักงานผู้เรียน","วันเริ่มเรียน","RRH","Area","Shop Code","Shop Name","รหัสพนักงานผู้สอน","ชื่อ Buddy","รหัสพนักงานหัวหน้างาน","ชื่อหัวหน้างาน",
+    ...[1,2,3,4,5,6,7].flatMap(n=>[`Day ${n} วันเริ่มเรียน`,`Day ${n} รหัสพนักงานผู้สอน`,`Day ${n} ชื่อ Buddy (ผู้สอน)`]),
+    ...BD_ITEMS.flatMap(x=>{const t=`Day ${x.day}: ${x.topic.length>60?x.topic.slice(0,60)+"…":x.topic}`;return [t+" [สถานะ]",t+" [วันที่]",t+" [หมายเหตุ]"]}),
+    "ความคืบหน้า (หัวข้อ)","จำนวน Need Follow-up","สรุปส่งต่อ Manager/OJT Coach","Buddy Sign-off","วันที่ Sign-off","Manager Acknowledge"];
+  const lines=[head];
+  list.forEach(r=>{const it=r.items||{};lines.push([thStamp(r.submittedAt||r.savedAt),r.ref||"",r.learnerId,r.name,thDate(r.startDate),r.rrh||"",r.area||"",r.shopCode||"",r.branch,r.buddyId,r.buddy,r.supId,r.sup,
+    ...[1,2,3,4,5,6,7].flatMap(n=>{const x=(r.days||{})[n]||{};return [x.date?thDate(x.date):"",x.buddyId||"",x.buddy||""]}),
+    ...BD_ITEMS.flatMap(x=>{const v=it[x.id]||{};return [BSTAT_TXT[v.s]||"",v.date?thDate(v.date):"",v.note||""]}),
+    `${r.progress||0}/${BD_ITEMS.length}`,r.followCount||0,r.summary,r.buddySign,thDate(r.buddySignDate),r.mgrAck])});
+  return lines;
+}
+const tableFor=list=>KIND!=="ob"?buddyTable2d(list):table2d(list);
+function csv(list){
+  const q=v=>{const s=String(v??"");return /[",\n\r]/.test(s)?`"${s.replace(/"/g,'""')}"`:s};
+  return tableFor(list).map(l=>l.map(q).join(",")).join("\r\n");
+}
+function tsv(list){
+  return tableFor(list).map(l=>l.map(v=>String(v??"").replace(/[\t\r\n]+/g," ")).join("\t")).join("\n");
+}
+$("#exportBtn").onclick=async()=>{
+  const f=filtered(),m=$("#adminMsg");
+  if(!f.length){m.className="msg err";m.textContent="ไม่มีรายการให้ดาวน์โหลด";return}
+  const t=new Date(),stamp=`${t.getFullYear()}${String(t.getMonth()+1).padStart(2,"0")}${String(t.getDate()).padStart(2,"0")}`;
+  const url=URL.createObjectURL(new Blob(["\ufeff"+csv(f)],{type:"text/csv;charset=utf-8"}));
+  const a=document.createElement("a");a.href=url;a.download=`${KIND==="buddy"?"Buddy_Checklist_7Days":KIND==="progress"?"Buddy_InProgress":"OB_Checklist"}_${stamp}.csv`;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  m.className="msg ok";m.textContent=`ดาวน์โหลด ${f.length} รายการแล้ว`;
+};
+$("#copyBtn").onclick=async()=>{
+  const f=filtered(),m=$("#adminMsg");
+  if(!f.length){m.className="msg err";m.textContent="ไม่มีรายการให้คัดลอก";return}
+  try{await navigator.clipboard.writeText(tsv(f));m.className="msg ok";m.textContent=`คัดลอก ${f.length} รายการแล้ว วางใน Excel ได้เลย`}
+  catch(e){m.className="msg err";m.textContent="คัดลอกไม่สำเร็จในหน้านี้ ใช้ปุ่มดาวน์โหลดแทน"}
+};
+
+/* ---------- boot ---------- */
+loadMine();
+bdShowSaved();
+try{const k=sessionStorage.getItem("ob-admin");if(k&&SCRIPT_URL){adminKey=k;showAdmin(true);loadAll()}}catch(e){}
+booted=true;route();
+})();
+</script>
+</body>
+</html>
